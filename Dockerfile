@@ -7,5 +7,5 @@ RUN go build
 
 # App container
 FROM alpine
-COPY --from=builder /go/src/app/chat_v3 /bin/
-ENTRYPOINT ["/bin/chat_v3"]
+COPY --from=builder /go/src/app/chat_websocket /bin/
+ENTRYPOINT ["/bin/chat_websocket"]
