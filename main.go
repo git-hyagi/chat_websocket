@@ -59,14 +59,14 @@ func main() {
 	}
 
 	// websocket struct
-	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}}
+	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 
 	log.Println("[INFO] Starting server on port", port)
 	http.Handle("/ws", webSkt)
 	go http.ListenAndServe(port, nil)
 
-	// wait for new messages arrive on websocket
-	go webSkt.rcvMsg()
+	// creates a goroutine for each client connection
+	go webSkt.newConnections()
 
 	// broadcast msg to all connected clients
 	go webSkt.printMsg(msg)
@@ -106,14 +106,20 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	webSkt.newConn <- ws
 }
 
+// newConnections creates a goroutine for every new websocket connection to handle the messages from each client
+func (webSkt *wsStruct) newConnections() {
+	for {
+		// received a new connection from channel
+		ws := <-webSkt.newConn
+		go webSkt.rcvMsg(ws)
+	}
+}
+
 // rcvMsg waits for new messages from clients
 // when a message arrives publish it on redis channel
 // and store on elasticsearch
-func (webSkt *wsStruct) rcvMsg() {
+func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 	for {
-
-		// received a new connection from channel
-		ws := <-webSkt.newConn
 
 		// wait for new messages on websocket
 		_, p, err := ws.ReadMessage()
@@ -123,21 +129,17 @@ func (webSkt *wsStruct) rcvMsg() {
 			log.Println("[ERROR]", err)
 			return
 		}
-
 		// decode the message from []byte to json
 		var jsonMsg msg
 		json.Unmarshal(p, &jsonMsg)
-
 		// publish the message on redis pubsub channel
 		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+ws.RemoteAddr().String()+`","Message": "`+jsonMsg.Message+`","When": "`+time.Now().Format("2006-01-02T15:04:05Z")+`"}`).Err()
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
-
 		// define the elasticsearch fields
 		webSkt.esStruct.chatClients = ws.RemoteAddr().String()
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
-
 		// store the message on elasticsearch
 		if err := index(&webSkt.esStruct); err != nil {
 			log.Println("[ERROR] indexing error!", err)
