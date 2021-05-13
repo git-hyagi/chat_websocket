@@ -1,0 +1,67 @@
+<html>
+
+<head>
+    <title>Chat</title>
+    <style>
+        input {
+            display: block;
+        }
+
+        ul {
+            list-style: none;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <form id="chatbox">
+        Username:<br/>
+        <textarea></textarea>
+        <input type="submit" value="Send" />
+    </form>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js">
+    </script>
+    <script>
+        $(function () {
+            var socket = null;
+            var msgBox = $("#chatbox textarea");
+            var messages = $("#messages");
+            $("#chatbox").submit(function () {
+                if (!msgBox.val()) return false;
+                if (!socket) {
+                    //alert("Error: There is no socket connection.");
+                    console.log("Error: There is no socket connection.");
+                    return false;
+                }
+                socket.send(JSON.stringify({"Message": msgBox.val()}));
+                msgBox.val("");
+                return false;
+            });
+            if (!window["WebSocket"]) {
+                //alert("Error: Your browser does not support web sockets.")
+                console.log("Error: Your browser does not support web sockets.")
+            } else {
+                socket = new WebSocket("ws://127.0.0.1:8081/ws");
+                socket.onclose = function () {
+                    //alert("Connection has been closed.");
+                    console.log("Connection has been closed.")
+                }
+                socket.onmessage = function (e) {
+                    var msg = JSON.parse(e.data);
+                    //var msg_time = new Date(msg.When);
+                    messages.append(
+                        $("<li>").append(
+                            //$("<i>").text(msg_time.getUTCDate()+"/"+(msg_time.getUTCMonth()+1).toString()+"/"+msg_time.getUTCFullYear()+ "..."),
+                                $("<i>").text(msg.When+"..."),
+                            $("<strong>").text(msg.Name+": "),
+                            $("<span>").text(msg.Message)
+                        )
+                    );
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
