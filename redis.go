@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -16,7 +15,7 @@ type redisStruct struct {
 }
 
 // create a redis connection
-func connectRedis(ctx context.Context, rdis *redisStruct) {
+func connectRedis(ctx context.Context, rdis *redisStruct) error {
 	client := redis.NewClient(&redis.Options{
 		Addr:     rdis.addr,
 		Password: rdis.pass,
@@ -25,7 +24,8 @@ func connectRedis(ctx context.Context, rdis *redisStruct) {
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		log.Fatalln("Error ", err)
+		return err
 	}
 	rdis.client = client
+	return nil
 }
