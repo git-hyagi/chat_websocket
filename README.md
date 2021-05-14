@@ -37,9 +37,10 @@ $ podman build . -t chat:v0.0.1
 * make sure that [redis is running](#running-redis-instance)
 * make sure that [elasticsearch is running](#running-elasticsearch-instance)
 
-* start the app as a container
+* start the app and frontend as containers
 ~~~
 $ podman run --name chat --rm -d -e REDIS_ADDR=$(hostname -i):6379 -e ES_HOST=http://$(hostname -i):9200 -p 8080:8080 localhost/chat:v0.0.1
+$ podman run --name nginx --rm -v .:/usr/share/nginx/html:ro -p 8000:80 -d nginx:1.20-alpine
 ~~~
 
 ## EXTRA
