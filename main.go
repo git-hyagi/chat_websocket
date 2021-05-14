@@ -118,15 +118,16 @@ func (webSkt *wsStruct) newConnections() {
 
 		var r map[string]interface{}
 		var buf bytes.Buffer
+		var esMsgs []msg
 
 		// prepare the query
 		// - bring only the last N messages (const lastNMsg)
-		// - ordered by date
+		// - ordered by date (only the earliest messages)
 		query := map[string]interface{}{
 			"size": lastNMsg,
 			"sort": map[string]interface{}{
 				"date": map[string]interface{}{
-					"order": "asc",
+					"order": "desc",
 				},
 			},
 			"query": map[string]interface{}{
@@ -150,18 +151,31 @@ func (webSkt *wsStruct) newConnections() {
 		// return the history of messages only if they could be found on elasticsearch
 		if res.StatusCode != 404 {
 			for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
-				esMsg := hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string)
-				esDate := hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string)
-				esClient := hit.(map[string]interface{})["_source"].(map[string]interface{})["client"].(string)
 
+				// convert it to time.Time because of msg.When field type
+				msgDate, _ := time.Parse(hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string), "2006-01-02T15:04:05Z")
+				aux := msg{
+					Message: hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string),
+					When:    msgDate,
+					Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["client"].(string),
+				}
+
+				// store the elasticsearch results in a slice because the dates are in the wrong order
+				esMsgs = append(esMsgs, aux)
+			}
+
+			// iterate over the messages from slice
+			for i := range esMsgs {
 				var jsonMsg msg
-				json.Unmarshal([]byte(`{"When": "`+esDate+`","Name": "`+esClient+`", "Message": "`+esMsg+`"}`), &jsonMsg)
 
+				// the decoding is made in the reverse order (from the last element to the first)
+				json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+`"}`), &jsonMsg)
 				if err := ws.WriteJSON(jsonMsg); err != nil {
 					log.Println("[ERROR]", err)
 					return
 				}
 			}
+
 		}
 
 		go webSkt.rcvMsg(ws)
