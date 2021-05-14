@@ -17,7 +17,7 @@
     <ul id="messages"></ul>
     <form id="chatbox">
         Username:<br/>
-        <textarea></textarea>
+        <textarea wrap="hard"></textarea>
         <input type="submit" value="Send" />
     </form>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js">
@@ -27,6 +27,7 @@
             var socket = null;
             var msgBox = $("#chatbox textarea");
             var messages = $("#messages");
+            var server = "192.168.0.14:8080"
             $("#chatbox").submit(function () {
                 if (!msgBox.val()) return false;
                 if (!socket) {
@@ -42,7 +43,7 @@
                 //alert("Error: Your browser does not support web sockets.")
                 console.log("Error: Your browser does not support web sockets.")
             } else {
-                socket = new WebSocket("ws://127.0.0.1:8080/ws");
+                socket = new WebSocket("ws://"+server+"/ws");
                 socket.onclose = function () {
                     //alert("Connection has been closed.");
                     console.log("Connection has been closed.")

@@ -132,6 +132,8 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		// decode the message from []byte to json
 		var jsonMsg msg
 		json.Unmarshal(p, &jsonMsg)
+		jsonMsg.Message = strings.Replace(jsonMsg.Message, "\n", "\\n", -1)
+
 		// publish the message on redis pubsub channel
 		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+ws.RemoteAddr().String()+`","Message": "`+jsonMsg.Message+`","When": "`+time.Now().Format("2006-01-02T15:04:05Z")+`"}`).Err()
 		if err != nil {
