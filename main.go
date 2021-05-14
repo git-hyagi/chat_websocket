@@ -139,9 +139,11 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
+
 		// define the elasticsearch fields
 		webSkt.esStruct.chatClients = ws.RemoteAddr().String()
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
+
 		// store the message on elasticsearch
 		if err := index(&webSkt.esStruct); err != nil {
 			log.Println("[ERROR] indexing error!", err)
