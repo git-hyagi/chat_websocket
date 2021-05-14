@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"strings"
 
@@ -48,4 +49,15 @@ func index(es *esStruct) error {
 	defer res.Body.Close()
 
 	return nil
+}
+
+func search(es *esStruct, buf bytes.Buffer) (*esapi.Response, error) {
+	// Perform the search request.
+	return es.client.Search(
+		es.client.Search.WithContext(context.Background()),
+		es.client.Search.WithIndex(es.esIndex),
+		es.client.Search.WithBody(&buf),
+		es.client.Search.WithTrackTotalHits(true),
+		es.client.Search.WithPretty(),
+	)
 }

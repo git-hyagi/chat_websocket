@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -13,6 +14,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
 )
+
+// when client connects bring only the last `lastNMsg` messages
+const lastNMsg = 5
 
 // message struct
 type msg struct {
@@ -111,6 +115,55 @@ func (webSkt *wsStruct) newConnections() {
 	for {
 		// received a new connection from channel
 		ws := <-webSkt.newConn
+
+		var r map[string]interface{}
+		var buf bytes.Buffer
+
+		// prepare the query
+		// - bring only the last N messages (const lastNMsg)
+		// - ordered by date
+		query := map[string]interface{}{
+			"size": lastNMsg,
+			"sort": map[string]interface{}{
+				"date": map[string]interface{}{
+					"order": "asc",
+				},
+			},
+			"query": map[string]interface{}{
+				"match_all": map[string]interface{}{},
+			},
+		}
+
+		if err := json.NewEncoder(&buf).Encode(query); err != nil {
+			log.Fatalf("[ERROR] Error encoding query: %s", err)
+		}
+		res, err := search(&webSkt.esStruct, buf)
+		if err != nil {
+			log.Fatalf("[ERROR] Error getting response: %s", err)
+		}
+		defer res.Body.Close()
+
+		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+			log.Fatalf("[ERROR] Error parsing the response body: %s", err)
+		}
+
+		// return the history of messages only if they could be found on elasticsearch
+		if res.StatusCode != 404 {
+			for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
+				esMsg := hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string)
+				esDate := hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string)
+				esClient := hit.(map[string]interface{})["_source"].(map[string]interface{})["client"].(string)
+
+				var jsonMsg msg
+				json.Unmarshal([]byte(`{"When": "`+esDate+`","Name": "`+esClient+`", "Message": "`+esMsg+`"}`), &jsonMsg)
+
+				if err := ws.WriteJSON(jsonMsg); err != nil {
+					log.Println("[ERROR]", err)
+					return
+				}
+			}
+		}
+
 		go webSkt.rcvMsg(ws)
 	}
 }
