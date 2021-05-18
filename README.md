@@ -3,6 +3,7 @@ Simple `GO` scalable chat using:
 * `websockets` to receive/delivery the messages from/to clients
 * `Redis` that acts as a pub/sub channel
 * `Elasticsearch` to store the messages
+* `Vue/Vuetify` to provide the frontend
 
 
 ## PRE-REQS
@@ -25,10 +26,17 @@ go get github.com/elastic/go-elasticsearch/v7
 ~~~
 
 ## BUILDING THE APP AS A CONTAINER
+* build app
 ~~~
 $ git clone https://github.com/git-hyagi/chat_websocket.git
 $ cd chat_websocket
 $ podman build . -t chat:v0.0.1
+~~~
+
+* build frontend
+~~~
+cd chat_websocket/frontend
+$ podman build . -t frontend:v0.0.1
 ~~~
 
 ## RUNNING
@@ -40,7 +48,7 @@ $ podman build . -t chat:v0.0.1
 * start the app and frontend as containers
 ~~~
 $ podman run --name chat --rm -d -e REDIS_ADDR=$(hostname -i):6379 -e ES_HOST=http://$(hostname -i):9200 -p 8080:8080 localhost/chat:v0.0.1
-$ podman run --name nginx --rm -v .:/usr/share/nginx/html:ro -p 8000:80 -d nginx:1.20-alpine
+$ podman run --name frontend --rm -d -p 8000:80 frontend:v0.0.1
 ~~~
 
 ## EXTRA
