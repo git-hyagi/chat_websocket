@@ -3,7 +3,7 @@
     <div class="pa-6">
       <h1>CHAT</h1>
     </div>
-    
+
     <ul id="list-of-messages" style="list-style-type: none">
       <li v-for="item in messages" :key="item.Message">
         [ {{ item.When }} ] <strong>{{ item.Name }}</strong
@@ -24,7 +24,10 @@
           </v-col>
 
           <v-col>
-            <v-btn class="mr-4" @click="send">SEND</v-btn>
+            <v-btn color="info" class="mr-4" @click="send">
+              SEND
+              <v-icon right dark> mdi-chat </v-icon>
+            </v-btn>
           </v-col>
         </v-row>
       </v-container>
@@ -36,7 +39,7 @@
 export default {
   data() {
     return {
-      doctor: "",
+      doctor: this.query,
       username: "John Doe",
       counter: 150,
       message: "",
@@ -50,6 +53,7 @@ export default {
       server: "192.168.0.14:8080",
     };
   },
+  props: ['query'],
   created() {
     console.log("creating the websocket ...");
     this.webSocket();
@@ -67,7 +71,8 @@ export default {
       }
     },
     webSocket: function () {
-      this.socket = new WebSocket("ws://" + this.server + "/ws");
+      console.log(this.doctor);
+      this.socket = new WebSocket("ws://" + this.server + "/ws/" + this.doctor);
       this.socket.onclose = function () {
         console.error("Connection has been closed.");
       };

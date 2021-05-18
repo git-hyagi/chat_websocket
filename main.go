@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
@@ -66,8 +67,13 @@ func main() {
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 
 	log.Println("[INFO] Starting server on port", port)
-	http.Handle("/ws", webSkt)
-	go http.ListenAndServe(port, nil)
+
+	r := mux.NewRouter()
+	r.Handle("/ws/{room}", webSkt)
+
+	//http.Handle("/ws", webSkt)
+	//go http.ListenAndServe(port, nil)
+	go http.ListenAndServe(port, r)
 
 	// creates a goroutine for each client connection
 	go webSkt.newConnections()
@@ -89,6 +95,8 @@ func main() {
 
 // ServeHTTP creates the websocket
 func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	webSkt.esIndex = "chat-" + mux.Vars(r)["room"]
 
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -287,11 +295,13 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
 		es.hosts = "http://localhost:9200"
 	}
 
-	if os.Getenv("ES_INDEX") != "" {
-		es.esIndex = os.Getenv("ES_INDEX")
-	} else {
-		es.esIndex = rdis.channel
-	}
+	/*
+		if os.Getenv("ES_INDEX") != "" {
+			es.esIndex = os.Getenv("ES_INDEX")
+		} else {
+			es.esIndex = rdis.channel
+		}
+	*/
 
 	return port, rdis, es
 }

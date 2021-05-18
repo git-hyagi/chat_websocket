@@ -13,7 +13,7 @@
       <v-list dense nav>
         <v-list-item v-for="item in items" :key="item.title" :to="item.to" link>
           <v-list-item-icon>
-            <v-icon>{{ item.icon }}</v-icon>
+            <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
           </v-list-item-icon>
 
           <v-list-item-content>
@@ -23,7 +23,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app color="primary" dark src="header.jpg" prominent> 
+    <v-app-bar app color="primary" dark src="header.jpg" prominent>
       <template v-slot:img="{ props }">
         <v-img
           v-bind="props"
@@ -34,13 +34,14 @@
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <v-toolbar-title>
-        <a href="/" style="text-decoration: none; color: white"> 
-        TELEMEDICINE
-        </a> 
+        <a href="/" style="text-decoration: none; color: white">
+          TELEMEDICINE
+        </a>
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
 
+      <!--
       <v-btn icon>
         <v-icon>mdi-magnify</v-icon>
       </v-btn>
@@ -52,6 +53,7 @@
       <v-btn icon>
         <v-icon>mdi-dots-vertical</v-icon>
       </v-btn>
+      -->
     </v-app-bar>
 
     <v-main>

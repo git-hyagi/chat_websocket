@@ -6,6 +6,8 @@ import Welcome from '../views/Welcome.vue'
 
 Vue.use(VueRouter)
 
+
+
 const routes = [
   {
     path: '/',
@@ -15,7 +17,8 @@ const routes = [
   {
     path: '/chat',
     name: 'Chat',
-    component: Chat
+    component: Chat,
+    props: route => ({ query: route.query.q })
   },
   {
     path: '/doctors',

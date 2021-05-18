@@ -69,18 +69,18 @@ export default {
         active: true,
         avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg",
         title: "Muleque Xandy",
-        to: "/chat",
+        to: "/chat?q=xandy",
       },
       {
         active: true,
         avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
         title: "Patch Adams",
-        to: "/about",
+        to: "/chat?q=padams",
       },
       {
         avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-        title: "Nise Yamaguchi (cloroquina)",
-        to: "/about",
+        title: "Nazi Yamauchi (cloroquina)",
+        to: "/chat?q=charlata",
       },
       {
         avatar: "https://cdn.vuetifyjs.com/images/lists/3.jpg",
@@ -90,9 +90,10 @@ export default {
     ],
     previous: [
       {
-        title: "Mayra Pinheiro",
+        title: "Marya Árvore de Natal",
         avatar: "https://cdn.vuetifyjs.com/images/lists/5.jpg",
-        to: "/about",
+        to: "/chat?q=cloroquina-captain",
+        default: true,
       },
     ],
   }),
