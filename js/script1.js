@@ -13,6 +13,9 @@ const app = new Vue({
         message: '',
         server: '192.168.0.14:8080',
     },
+    created() {
+        this.webSocket();
+    },
     methods: {
         send: function () {
 
@@ -42,5 +45,3 @@ const app = new Vue({
     },
 
 })
-
-app.webSocket()
