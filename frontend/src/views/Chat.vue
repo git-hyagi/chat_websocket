@@ -20,6 +20,7 @@
               :rules="msgRules"
               :counter="counter"
               required
+              @keyup="sendEnter"
             ></v-text-field>
           </v-col>
 
@@ -40,7 +41,8 @@ export default {
   data() {
     return {
       doctor: this.query,
-      username: "John Doe",
+      //username: "John Doe",
+      username: this.$cookie.get("user"),
       counter: 150,
       message: "",
       server: "192.168.0.14:8080",
@@ -53,12 +55,20 @@ export default {
       server: "192.168.0.14:8080",
     };
   },
-  props: ['query'],
+  props: ["query"],
   created() {
     console.log("creating the websocket ...");
     this.webSocket();
   },
   methods: {
+    sendEnter: function (e) {
+      // if pressed enter, just call the same method as from the send button
+      if (e.keyCode === 13) {
+        // Cancel the default action, if needed
+        e.preventDefault();
+        this.send();
+      }
+    },
     send: function () {
       if (!this.socket) {
         console.error("Error: There is no socket connection.");

@@ -3,8 +3,14 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify'
+import axios from 'axios'
+import vuecookie from 'vue-cookie'
 
 Vue.config.productionTip = false
+//Vue.use(axios)
+Vue.prototype.$http = axios
+Vue.prototype.$cookie = vuecookie
+
 
 new Vue({
   router,

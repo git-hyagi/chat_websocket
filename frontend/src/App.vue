@@ -21,6 +21,14 @@
           </v-list-item-content>
         </v-list-item>
       </v-list>
+
+      <template v-slot:append>
+        <div class="pa-2">
+          <v-btn block class="sm-2" dark small color="primary" to="/Login">
+            Login
+          </v-btn>
+        </div>
+      </template>
     </v-navigation-drawer>
 
     <v-app-bar app color="primary" dark src="header.jpg" prominent>

@@ -35,6 +35,11 @@ type wsStruct struct {
 	newConn  chan *websocket.Conn
 }
 
+type Person struct {
+	Name     string
+	Password string
+}
+
 func main() {
 	var err error
 	log.SetFlags(log.Ltime | log.Lshortfile)
@@ -70,6 +75,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/ws/{room}", webSkt)
+	r.HandleFunc("/login", login)
 
 	//http.Handle("/ws", webSkt)
 	//go http.ListenAndServe(port, nil)
@@ -116,6 +122,23 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// send this new connection to newConn channel, to let rcvMsg goroutine handle it
 	webSkt.newConn <- ws
+}
+
+// ServeHTTP creates the websocket
+func login(w http.ResponseWriter, r *http.Request) {
+
+	var p Person
+
+	//Allow CORS here By * or specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		log.Println(err)
+	}
+
+	log.Println("p:", p.Name, p.Password)
+	//fmt.Fprintln(w, `{"user": "jose", "password": "12345"}`)
 }
 
 // newConnections creates a goroutine for every new websocket connection to handle the messages from each client
