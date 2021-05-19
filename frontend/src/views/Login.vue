@@ -50,17 +50,14 @@ export default {
         )
         .then((response) => (this.info = response));
 
-      this.$cookie.set("user", this.name);
-      this.$cookie.set("password", this.password);
-
-      if (this.$cookie.get("user") != null) {
-        console.log(this.$cookie.get("user"));
-      }
-
-      if (this.name === "jose" && this.password === "12345") {
+      if (this.name === "jose" && this.password === "1") {
+        this.$cookie.set("user", this.name);
+        this.$cookie.set("password", this.password);
         this.$router.push({ name: "Welcome" });
+        this.$router.go();
       } else {
         alert("Login failed!");
+        this.$router.go();
       }
     },
   },

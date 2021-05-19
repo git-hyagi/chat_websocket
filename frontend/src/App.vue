@@ -24,8 +24,27 @@
 
       <template v-slot:append>
         <div class="pa-2">
-          <v-btn block class="sm-2" dark small color="primary" to="/Login">
+          <v-btn
+            block
+            class="sm-2"
+            dark
+            small
+            color="primary"
+            to="/Login"
+            v-if="logged"
+          >
             Login
+          </v-btn>
+          <v-btn
+            block
+            class="sm-2"
+            dark
+            small
+            color="primary"
+            @click="logout"
+            v-else
+          >
+            Logout
           </v-btn>
         </div>
       </template>
@@ -72,13 +91,34 @@
 
 <script>
 export default {
-  data: () => ({
-    drawer: null,
-    items: [
-      { title: "Chat", icon: "mdi-message-text", to: "/chat" },
-      { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
-      { title: "About", icon: "mdi-information", to: "/about" },
-    ],
-  }),
+  computed: {
+    logged: function () {
+      return this.$cookie.get("user") == null ? true : false;
+    },
+  },
+  data() {
+    return {
+      drawer: null,
+      items: [
+        {
+          title: "Chat",
+          icon: "mdi-message-text",
+          to: this.$cookie.get("previous-chat"),
+        },
+        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
+        { title: "About", icon: "mdi-information", to: "/about" },
+      ],
+    };
+  },
+  methods: {
+    logout() {
+      alert("logging out ...");
+      this.$cookie.delete("user");
+      this.$cookie.delete("password");
+      this.$cookie.delete("previous-chat");
+      this.$router.push({ name: "Welcome" });
+      this.$router.go();
+    },
+  },
 };
 </script>

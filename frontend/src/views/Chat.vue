@@ -39,6 +39,11 @@
 <script>
 export default {
   data() {
+
+    if (this.$cookie.get("user") == null) {
+      return false
+    }
+
     return {
       doctor: this.query,
       //username: "John Doe",
@@ -52,7 +57,6 @@ export default {
           v.length <= this.counter ||
           "Message must be lesser than " + this.counter + " characters",
       ],
-      server: "192.168.0.14:8080",
     };
   },
   props: ["query"],

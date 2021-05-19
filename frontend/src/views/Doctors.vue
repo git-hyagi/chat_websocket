@@ -1,101 +1,64 @@
 <template>
-<v-container>
-<div class="pa-6">
-    <h1>DOCTORS</h1>
-    </div>
-  <v-card class="mx-auto" max-width="500">
-    <!--
-    <v-toolbar
-      color="deep-purple accent-4"
-      dark
-    >
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
+  <v-container>
+    <h1 class="pa-6">Doctors</h1>
+    <v-card max-width="500" class="mx-auto">
+      <v-list>
+        <v-list-item v-for="item in items" :key="item.title" :to="item.to">
+          <v-list-item-content>
+            <v-list-item-title v-text="item.title"></v-list-item-title>
+            <v-list-item-subtitle v-text="item.subtitle"></v-list-item-subtitle>
+          </v-list-item-content>
 
-      <v-toolbar-title>New Chat</v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <v-btn icon>
-        <v-icon>mdi-magnify</v-icon>
-      </v-btn>
-    </v-toolbar>
-    -->
-
-    <v-list subheader>
-      <v-subheader>Recent chat</v-subheader>
-
-      <v-list-item v-for="chat in recent" :key="chat.title" :to="chat.to">
-        <v-list-item-avatar>
-          <v-img :alt="`${chat.title} avatar`" :src="chat.avatar"></v-img>
-        </v-list-item-avatar>
-
-        <v-list-item-content>
-          <v-list-item-title v-text="chat.title"></v-list-item-title>
-        </v-list-item-content>
-
-        <v-list-item-icon>
-          <v-icon :color="chat.active ? 'deep-purple accent-4' : 'grey'">
-            mdi-message-outline
-          </v-icon>
-        </v-list-item-icon>
-      </v-list-item>
-    </v-list>
-
-    <v-divider></v-divider>
-
-    <v-list subheader>
-      <v-subheader>Previous chats</v-subheader>
-
-      <v-list-item v-for="chat in previous" :key="chat.title" :to="chat.to">
-        <v-list-item-avatar>
-          <v-img :alt="`${chat.title} avatar`" :src="chat.avatar"></v-img>
-        </v-list-item-avatar>
-
-        <v-list-item-content>
-          <v-list-item-title v-text="chat.title"></v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
-  </v-card>
+          <v-list-item-avatar>
+            <v-img :src="item.avatar"></v-img>
+          </v-list-item-avatar>
+        </v-list-item>
+      </v-list>
+    </v-card>
   </v-container>
 </template>
 
-
 <script>
 export default {
-  data: () => ({
-    recent: [
-      {
-        active: true,
-        avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg",
-        title: "Muleque Xandy",
-        to: "/chat?q=xandy",
-      },
-      {
-        active: true,
-        avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
-        title: "Patch Adams",
-        to: "/chat?q=padams",
-      },
-      {
-        avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-        title: "Nazi Yamauchi (cloroquina)",
-        to: "/chat?q=charlata",
-      },
-      {
-        avatar: "https://cdn.vuetifyjs.com/images/lists/3.jpg",
-        title: "Elizabeth Blackwell",
-        to: "/about",
-      },
-    ],
-    previous: [
-      {
-        title: "Marya Árvore de Natal",
-        avatar: "https://cdn.vuetifyjs.com/images/lists/5.jpg",
-        to: "/chat?q=cloroquina-captain",
-        default: true,
-      },
-    ],
-  }),
+  data() {
+    if (this.$cookie.get("user") == null) {
+      return false;
+    }
+
+    return {
+      items: [
+        {
+          title: "Muleque Xandy",
+          subtitle: "Ortopedia",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg",
+          to: "/chat?q=xandy",
+        },
+        {
+          title: "Patch Adams",
+          subtitle: "Clínica",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
+          to: "/chat?q=padams",
+        },
+        {
+          title: "Nazi Yamauchi",
+          subtitle: "Charlatã Minion",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/3.jpg",
+          to: "/chat?q=charlata",
+        },
+        {
+          title: "Marya Árvore de Natal",
+          subtitle: "Minion",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/5.jpg",
+          to: "/chat?q=cloroquina-captain",
+        },
+        {
+          title: "Elizabeth Blackwell",
+          subtitle: "",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
+          to: "/about",
+        },
+      ],
+    };
+  },
 };
 </script>
