@@ -7,10 +7,8 @@ import axios from 'axios'
 import vuecookie from 'vue-cookie'
 
 Vue.config.productionTip = false
-//Vue.use(axios)
 Vue.prototype.$http = axios
 Vue.prototype.$cookie = vuecookie
-
 
 new Vue({
   router,

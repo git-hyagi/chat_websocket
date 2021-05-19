@@ -3,7 +3,12 @@
     <h1 class="pa-6">Doctors</h1>
     <v-card max-width="500" class="mx-auto">
       <v-list>
-        <v-list-item v-for="item in items" :key="item.title" :to="item.to">
+        <!-- <v-list-item v-for="item in items" :key="item.title"  :to="item.to"> -->
+        <v-list-item
+          v-for="item in items"
+          :key="item.title"
+          @click="updatePrevious(item.to)"
+        >
           <v-list-item-content>
             <v-list-item-title v-text="item.title"></v-list-item-title>
             <v-list-item-subtitle v-text="item.subtitle"></v-list-item-subtitle>
@@ -59,6 +64,12 @@ export default {
         },
       ],
     };
+  },
+  methods: {
+    updatePrevious: function (item) {
+      this.$cookie.set("previous-chat", item);
+      this.$router.push(item);
+    },
   },
 };
 </script>

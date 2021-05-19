@@ -28,37 +28,35 @@
 <script>
 export default {
   data: () => ({
-    server: "192.168.0.14:8080",
+    server: "localhost:8080",
     name: "",
     nameRules: [(v) => !!v || "Name is required"],
     password: "",
     passwordRules: [(v) => !!v || "Password is required"],
-    info: "",
   }),
   mounted() {},
   methods: {
     validate() {
-      // TODO: create a go path to handle this
-      this.$http
-        .post(
-          "http://" + this.server + "/login",
-          {
-            name: this.name,
-            password: this.password,
-          },
-          { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-        )
-        .then((response) => (this.info = response));
+      let self = this;
+      let data = { name: this.name, password: this.password };
+      let headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+      };
 
-      if (this.name === "jose" && this.password === "1") {
-        this.$cookie.set("user", this.name);
-        this.$cookie.set("password", this.password);
-        this.$router.push({ name: "Welcome" });
-        this.$router.go();
-      } else {
-        alert("Login failed!");
-        this.$router.go();
-      }
+      this.$http
+        .post("http://" + this.server + "/login", data, {
+          headers: headers,
+          withCredentials: true,
+        })
+        .then(function (response) {
+          self.$router.push({ name: "Welcome" });
+          self.$router.go();
+        })
+        .catch(function (error) {
+          console.log(error);
+          alert("Login failed!");
+          self.$router.go();
+        });
     },
   },
 };

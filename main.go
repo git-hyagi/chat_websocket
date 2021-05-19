@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	//"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -130,15 +131,33 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var p Person
 
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8082")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		log.Println(err)
 	}
 
-	log.Println("p:", p.Name, p.Password)
-	//fmt.Fprintln(w, `{"user": "jose", "password": "12345"}`)
+	if p.Name == "jose" && p.Password == "12345" {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "user",
+			Value:    p.Name,
+			SameSite: http.SameSiteNoneMode,
+			Path:     "/",
+			//Secure:   true,
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "password",
+			Value:    p.Password,
+			SameSite: http.SameSiteNoneMode,
+			Path:     "/",
+			//Secure:   true,
+		})
+
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
 }
 
 // newConnections creates a goroutine for every new websocket connection to handle the messages from each client
