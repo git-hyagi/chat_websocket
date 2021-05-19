@@ -255,13 +255,14 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		jsonMsg.Message = strings.Replace(jsonMsg.Message, "\n", "\\n", -1)
 
 		// publish the message on redis pubsub channel
-		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+ws.RemoteAddr().String()+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
+		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+jsonMsg.Name+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
 
 		// define the elasticsearch fields
-		webSkt.esStruct.chatClients = ws.RemoteAddr().String()
+		//webSkt.esStruct.chatClients = ws.RemoteAddr().String()
+		webSkt.esStruct.chatClients = jsonMsg.Name
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
 		webSkt.esStruct.date = date
 

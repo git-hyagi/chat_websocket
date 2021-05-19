@@ -20,7 +20,7 @@
               :rules="msgRules"
               :counter="counter"
               required
-              @keyup="sendEnter"
+              @keydown="sendEnter"
             ></v-text-field>
           </v-col>
 
@@ -46,8 +46,6 @@ export default {
 
     return {
       doctor: this.query,
-      //username: "John Doe",
-      username: this.$cookie.get("user"),
       counter: 150,
       message: "",
       server: "192.168.0.14:8080",
@@ -79,7 +77,7 @@ export default {
         return false;
       }
       if (this.message !== "") {
-        this.socket.send(JSON.stringify({ Message: this.message }));
+        this.socket.send(JSON.stringify({ Message: this.message, Name: this.$cookie.get("user") }));
         this.message = "";
         return false;
       }
