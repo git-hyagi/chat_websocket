@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <h1 class="pa-6">Doctors</h1>
-    <v-card max-width="500" class="mx-auto">
+    <v-card max-width="500" class="mx-auto" v-if="logged">
       <v-list>
         <!-- <v-list-item v-for="item in items" :key="item.title"  :to="item.to"> -->
         <v-list-item
@@ -27,10 +27,11 @@
 export default {
   data() {
     if (this.$cookie.get("user") == null) {
-      return false;
+      return { logged: false };
     }
 
     return {
+      logged: true,
       items: [
         {
           title: "Muleque Xandy",
@@ -69,6 +70,7 @@ export default {
     updatePrevious: function (item) {
       this.$cookie.set("previous-chat", item);
       this.$router.push(item);
+      this.$router.go();
     },
   },
 };

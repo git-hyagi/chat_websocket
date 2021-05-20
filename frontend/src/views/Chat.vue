@@ -39,12 +39,12 @@
 <script>
 export default {
   data() {
-
     if (this.$cookie.get("user") == null) {
-      return false
+      return { logged: false };
     }
 
     return {
+      logged: true,
       doctor: this.query,
       counter: 150,
       message: "",
@@ -57,6 +57,7 @@ export default {
       ],
     };
   },
+  // route query (?q=<doctor>) that comes from Doctor component
   props: ["query"],
   created() {
     console.log("creating the websocket ...");
@@ -77,7 +78,12 @@ export default {
         return false;
       }
       if (this.message !== "") {
-        this.socket.send(JSON.stringify({ Message: this.message, Name: this.$cookie.get("user") }));
+        this.socket.send(
+          JSON.stringify({
+            Message: this.message,
+            Name: this.$cookie.get("user"),
+          })
+        );
         this.message = "";
         return false;
       }

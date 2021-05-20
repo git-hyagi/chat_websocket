@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	//"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -144,14 +143,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 			Value:    p.Name,
 			SameSite: http.SameSiteNoneMode,
 			Path:     "/",
-			//Secure:   true,
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "password",
 			Value:    p.Password,
 			SameSite: http.SameSiteNoneMode,
 			Path:     "/",
-			//Secure:   true,
 		})
 
 		w.WriteHeader(http.StatusOK)
@@ -261,7 +258,6 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		}
 
 		// define the elasticsearch fields
-		//webSkt.esStruct.chatClients = ws.RemoteAddr().String()
 		webSkt.esStruct.chatClients = jsonMsg.Name
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
 		webSkt.esStruct.date = date
@@ -337,14 +333,6 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
 	} else {
 		es.hosts = "http://localhost:9200"
 	}
-
-	/*
-		if os.Getenv("ES_INDEX") != "" {
-			es.esIndex = os.Getenv("ES_INDEX")
-		} else {
-			es.esIndex = rdis.channel
-		}
-	*/
 
 	return port, rdis, es
 }
