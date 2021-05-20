@@ -130,7 +130,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var p Person
 
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8082")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
