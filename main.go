@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/git-hyagi/chat_websocket/db"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -35,9 +37,10 @@ type wsStruct struct {
 	newConn  chan *websocket.Conn
 }
 
-type Person struct {
+type User struct {
 	Name     string
 	Password string
+	db.DbConnection
 }
 
 func main() {
@@ -68,6 +71,14 @@ func main() {
 		log.Fatalln("[FATAL] Error on ES connection", err)
 	}
 
+	database, err := db.Connect("telemedicine", "root", "password", "localhost:3306")
+	if err != nil {
+		log.Fatalln("[FATAL] Error on database conncetion", err)
+	}
+
+	var user User
+	user.DB = database
+
 	// websocket struct
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 
@@ -75,7 +86,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/ws/{room}", webSkt)
-	r.HandleFunc("/login", login)
+	r.Handle("/login", user)
 
 	//http.Handle("/ws", webSkt)
 	//go http.ListenAndServe(port, nil)
@@ -125,30 +136,36 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // ServeHTTP creates the websocket
-func login(w http.ResponseWriter, r *http.Request) {
+func (user User) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	var p Person
-
+	var userLogin User
 	//Allow CORS here By * or specific origin
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&userLogin); err != nil {
 		log.Println(err)
 	}
 
-	if p.Name == "jose" && p.Password == "12345" {
+	password, err := user.GetPassword(userLogin.Name)
+	if err != nil {
+		log.Println("User not found!")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if userLogin.Password == password {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "user",
-			Value:    p.Name,
+			Value:    url.QueryEscape(userLogin.Name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
 			SameSite: http.SameSiteNoneMode,
-			Path:     "/",
+			//Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "password",
-			Value:    p.Password,
+			Value:    password,
 			SameSite: http.SameSiteNoneMode,
-			Path:     "/",
+			//Path:     "/",
 		})
 
 		w.WriteHeader(http.StatusOK)
@@ -219,6 +236,7 @@ func (webSkt *wsStruct) newConnections() {
 				json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+`"}`), &jsonMsg)
 				if err := ws.WriteJSON(jsonMsg); err != nil {
 					log.Println("[ERROR]", err)
+					delete(webSkt.listConn, ws)
 					return
 				}
 			}
@@ -251,14 +269,16 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		json.Unmarshal(p, &jsonMsg)
 		jsonMsg.Message = strings.Replace(jsonMsg.Message, "\n", "\\n", -1)
 
+		unescapeName, _ := url.QueryUnescape(jsonMsg.Name)
+
 		// publish the message on redis pubsub channel
-		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+jsonMsg.Name+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
+		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+unescapeName+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
 
 		// define the elasticsearch fields
-		webSkt.esStruct.chatClients = jsonMsg.Name
+		webSkt.esStruct.chatClients = unescapeName
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
 		webSkt.esStruct.date = date
 

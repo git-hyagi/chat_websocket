@@ -61,7 +61,7 @@ export default {
           title: "Elizabeth Blackwell",
           subtitle: "",
           avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-          to: "/about",
+          to: "/chat?q=elizabeth",
         },
       ],
     };
