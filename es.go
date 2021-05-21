@@ -10,12 +10,13 @@ import (
 )
 
 type esStruct struct {
-	hosts       string
-	msg         string
-	date        string
-	esIndex     string
-	chatClients string
-	client      *elasticsearch.Client
+	hosts   string
+	msg     string
+	date    string
+	esIndex string
+	patient string
+	doctor  string
+	client  *elasticsearch.Client
 }
 
 func connectES(es *esStruct) (*elasticsearch.Client, error) {
@@ -33,7 +34,11 @@ func index(es *esStruct) error {
 
 	// Build the request body.
 	var b strings.Builder
-	b.WriteString(`{"client" : "` + es.chatClients + `", "msg": "` + es.msg + `", "date": "` + es.date + `"}`)
+	b.WriteString(`{"patient" : "` + es.patient +
+		`", "doctor": "` + es.doctor +
+		`", "msg": "` + es.msg +
+		`", "date": "` + es.date +
+		`"}`)
 
 	// Set up the request object.
 	req := esapi.IndexRequest{

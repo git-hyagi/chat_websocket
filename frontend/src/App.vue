@@ -11,15 +11,38 @@
       <v-divider></v-divider>
 
       <v-list dense nav>
-        <v-list-item v-for="item in items" :key="item.title" :to="item.to" link>
-          <v-list-item-icon>
-            <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
-          </v-list-item-icon>
+        <span v-if="type == 'doctor'">
+          <v-list-item
+            v-for="item in docItems"
+            :key="item.title"
+            :to="item.to"
+            link
+          >
+            <v-list-item-icon>
+              <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+            </v-list-item-icon>
 
-          <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </span>
+        <span v-else>
+          <v-list-item
+            v-for="item in patientItems"
+            :key="item.title"
+            :to="item.to"
+            link
+          >
+            <v-list-item-icon>
+              <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+            </v-list-item-icon>
+
+            <v-list-item-content>
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </span>
       </v-list>
 
       <template v-slot:append>
@@ -99,7 +122,18 @@ export default {
   data() {
     return {
       drawer: null,
-      items: [
+      type: this.$cookie.get("type"),
+      docItems: [
+        {
+          title: "Chat",
+          icon: "mdi-message-text",
+          to: this.$cookie.get("previous-chat"),
+        },
+        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
+        { title: "Patients", icon: "mdi-clipboard-pulse", to: "/patients" },
+        { title: "About", icon: "mdi-information", to: "/about" },
+      ],
+      patientItems: [
         {
           title: "Chat",
           icon: "mdi-message-text",
@@ -116,6 +150,8 @@ export default {
       this.$cookie.delete("user");
       this.$cookie.delete("password");
       this.$cookie.delete("previous-chat");
+      this.$cookie.delete("type");
+      this.$cookie.delete("avatar");
       this.$router.push({ name: "Welcome" });
       this.$router.go();
     },

@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div class="pa-6">
-      <h1>CHAT</h1>
+      <h1>Doctor</h1>
     </div>
 
     <ul id="list-of-messages" style="list-style-type: none">
@@ -90,7 +90,14 @@ export default {
     },
     webSocket: function () {
       console.log(this.doctor);
-      this.socket = new WebSocket("ws://" + this.server + "/ws/" + this.doctor);
+      this.socket = new WebSocket(
+        "ws://" +
+          this.server +
+          "/ws/" +
+          this.doctor +
+          "/" +
+          this.$cookie.get("user")
+      );
       this.socket.onclose = function () {
         console.error("Connection has been closed.");
       };

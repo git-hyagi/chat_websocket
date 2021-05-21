@@ -1,9 +1,9 @@
 <template>
   <v-container>
-    <h1 class="pa-6">Doctors</h1>
+    <h1 class="pa-6">Patients</h1>
     <v-card max-width="500" class="mx-auto" v-if="logged">
       <v-list>
-        <!-- <v-list-item v-for="item in items" :key="item.title"  :to="item.to"> -->
+
         <v-list-item
           v-for="item in items"
           :key="item.title"
@@ -34,7 +34,7 @@ export default {
     self = this;
     this.$http
       .get(
-        "http://" + this.server + "/doctors",
+        "http://" + this.server + "/patients",
         {},
         {
           headers: headers,
@@ -47,22 +47,21 @@ export default {
 
         for (i = 0; i < response.data.length; i++) {
           var aux;
-          var doctors = JSON.stringify(response.data[i]);
-          var docJson = JSON.parse(doctors);
+          var patients = JSON.stringify(response.data[i]);
+          var patientsJson = JSON.parse(patients);
 
           aux = {
-            title: docJson.Name,
-            subtitle: docJson.Subtitle,
-            avatar: docJson.Avatar,
-            to: "/chat?q=" + docJson.Username,
-            doctorName: docJson.Name,
+            title: patientsJson.Name,
+            avatar: patientsJson.Avatar,
+            to: "/chat?q=" + patientsJson.Username,
+            doctorName: patientsJson.Name,
           };
           self.items.push(aux);
         }
       })
       .catch(function (error) {
         console.log(error);
-        alert("Error looking for doctors!");
+        alert("Error looking for patients!");
         self.$router.push({ name: "Welcome" });
         //self.$router.go();
       });
@@ -75,20 +74,7 @@ export default {
     return {
       server: "192.168.0.14:8080",
       logged: true,
-      items: [
-        {
-          title: "Patch Adams",
-          subtitle: "Clínica",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
-          to: "/chat?q=padams",
-        },
-        {
-          title: "Elizabeth Blackwell",
-          subtitle: "",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-          to: "/chat?q=elizabeth",
-        },
-      ],
+      items: [],
     };
   },
   methods: {

@@ -26,6 +26,8 @@ type msg struct {
 	Name    string
 	Message string
 	When    time.Time
+	Doctor  string
+	Patient string
 }
 
 // websocket struct
@@ -37,10 +39,17 @@ type wsStruct struct {
 	newConn  chan *websocket.Conn
 }
 
-type User struct {
+type user struct {
+	db.User
+}
+
+type doctor struct {
+	db.User
+	Username string
 	Name     string
 	Password string
-	db.DbConnection
+	Subtitle string
+	Avatar   string
 }
 
 func main() {
@@ -76,8 +85,11 @@ func main() {
 		log.Fatalln("[FATAL] Error on database conncetion", err)
 	}
 
-	var user User
+	user := &user{}
 	user.DB = database
+
+	doctor := &doctor{}
+	doctor.DB = database
 
 	// websocket struct
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
@@ -85,11 +97,10 @@ func main() {
 	log.Println("[INFO] Starting server on port", port)
 
 	r := mux.NewRouter()
-	r.Handle("/ws/{room}", webSkt)
+	r.Handle("/ws/{doctor}/{patient}", webSkt)
 	r.Handle("/login", user)
+	r.Handle("/doctors", doctor)
 
-	//http.Handle("/ws", webSkt)
-	//go http.ListenAndServe(port, nil)
 	go http.ListenAndServe(port, r)
 
 	// creates a goroutine for each client connection
@@ -113,7 +124,9 @@ func main() {
 // ServeHTTP creates the websocket
 func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	webSkt.esIndex = "chat-" + mux.Vars(r)["room"]
+	webSkt.esIndex = "chat-" + mux.Vars(r)["doctor"]
+	webSkt.doctor = mux.Vars(r)["doctor"]
+	webSkt.patient = mux.Vars(r)["patient"]
 
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -135,10 +148,10 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	webSkt.newConn <- ws
 }
 
-// ServeHTTP creates the websocket
-func (user User) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// Login
+func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	var userLogin User
+	var userLogin db.User
 	//Allow CORS here By * or specific origin
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -147,23 +160,38 @@ func (user User) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	password, err := user.GetPassword(userLogin.Name)
+	password, err := user.GetAttribute(userLogin.Name, "password")
 	if err != nil {
-		log.Println("User not found!")
+		log.Println("User", userLogin.Name, "not found!")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	userType, _ := user.GetAttribute(userLogin.Name, "type")
+	name, _ := user.GetAttribute(userLogin.Name, "name")
+	avatar, _ := user.GetAttribute(userLogin.Name, "avatar")
 
 	if userLogin.Password == password {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "user",
-			Value:    url.QueryEscape(userLogin.Name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
+			Value:    url.QueryEscape(name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
 			SameSite: http.SameSiteNoneMode,
 			//Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "password",
 			Value:    password,
+			SameSite: http.SameSiteNoneMode,
+			//Path:     "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "type",
+			Value:    userType,
+			SameSite: http.SameSiteNoneMode,
+			//Path:     "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "avatar",
+			Value:    avatar,
 			SameSite: http.SameSiteNoneMode,
 			//Path:     "/",
 		})
@@ -187,6 +215,7 @@ func (webSkt *wsStruct) newConnections() {
 		// prepare the query
 		// - bring only the last N messages (const lastNMsg)
 		// - ordered by date (only the earliest messages)
+		// - matching patient with doctor
 		query := map[string]interface{}{
 			"size": lastNMsg,
 			"sort": map[string]interface{}{
@@ -195,7 +224,12 @@ func (webSkt *wsStruct) newConnections() {
 				},
 			},
 			"query": map[string]interface{}{
-				"match_all": map[string]interface{}{},
+				"bool": map[string]interface{}{
+					"must": []map[string]interface{}{
+						{"match": map[string]interface{}{"patient": webSkt.patient}},
+						{"match": map[string]interface{}{"doctor": webSkt.doctor}},
+					},
+				},
 			},
 		}
 
@@ -221,7 +255,10 @@ func (webSkt *wsStruct) newConnections() {
 				aux := msg{
 					Message: hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string),
 					When:    msgDate,
-					Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["client"].(string),
+					Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
+					//Name:    "TMP",
+					Doctor:  hit.(map[string]interface{})["_source"].(map[string]interface{})["doctor"].(string),
+					Patient: hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
 				}
 
 				// store the elasticsearch results in a slice because the dates are in the wrong order
@@ -233,7 +270,12 @@ func (webSkt *wsStruct) newConnections() {
 				var jsonMsg msg
 
 				// the decoding is made in the reverse order (from the last element to the first)
-				json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+`"}`), &jsonMsg)
+				json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+
+					`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+
+					`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+
+					`", "Patient": "`+esMsgs[len(esMsgs)-1-i].Patient+
+					`", "Doctor": "`+esMsgs[len(esMsgs)-1-i].Doctor+
+					`"}`), &jsonMsg)
 				if err := ws.WriteJSON(jsonMsg); err != nil {
 					log.Println("[ERROR]", err)
 					delete(webSkt.listConn, ws)
@@ -278,7 +320,7 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		}
 
 		// define the elasticsearch fields
-		webSkt.esStruct.chatClients = unescapeName
+		webSkt.esStruct.patient = unescapeName
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
 		webSkt.esStruct.date = date
 
@@ -309,6 +351,26 @@ func (webSkt *wsStruct) printMsg(msgChan chan string) {
 			}
 		}
 	}
+}
+
+func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("NEW REQUEST!!")
+	//Allow CORS here By * or specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Content-Type", "application/json")
+
+	doc, err := d.GetDoctors()
+	if err != nil {
+		log.Println("no doc found!", err)
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	jsonMsg, _ := json.Marshal(doc)
+	w.Write(jsonMsg)
+	w.WriteHeader(http.StatusOK)
+
 }
 
 // check if some environment variables were declared and if they did define

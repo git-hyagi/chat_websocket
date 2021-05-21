@@ -10,6 +10,16 @@ type DbConnection struct {
 	*sql.DB
 }
 
+type User struct {
+	Username string
+	Name     string
+	Password string
+	Type     string
+	Subtitle string
+	Avatar   string
+	DbConnection
+}
+
 // database connection function
 func Connect(database, user, password, address string) (db *sql.DB, err error) {
 	dsn := user + ":" + password + "@tcp(" + address + ")/" + database
@@ -19,20 +29,44 @@ func Connect(database, user, password, address string) (db *sql.DB, err error) {
 }
 
 // GetPassword retrieves a password from a specific user
-func (db *DbConnection) GetPassword(username string) (string, error) {
-	rows, err := db.Query("SELECT password from users WHERE name = '" + username + "'")
+func (db *DbConnection) GetAttribute(username, attribute string) (string, error) {
+	rows, err := db.Query("SELECT " + attribute + " from users WHERE username = '" + username + "'")
 	if err != nil {
-		db.Close()
+		//db.Close()
 		return "", err
 	}
 
 	rows.Next()
-	var password string
-	err = rows.Scan(&password)
+	var attr string
+	err = rows.Scan(&attr)
 	if err != nil {
-		db.Close()
+		//db.Close()
 		return "", err
 	}
 	rows.Close()
-	return password, nil
+	return attr, nil
+}
+
+// GetDoctors
+func (db *DbConnection) GetDoctors() ([]User, error) {
+	rows, err := db.Query("SELECT * from users WHERE type = 'doctor'")
+	if err != nil {
+		//db.Close()
+		return []User{}, err
+	}
+
+	user := []User{}
+
+	for rows.Next() {
+		aux := User{}
+		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar)
+		user = append(user, aux)
+		if err != nil {
+			//db.Close()
+			return []User{}, err
+		}
+	}
+
+	rows.Close()
+	return user, nil
 }
