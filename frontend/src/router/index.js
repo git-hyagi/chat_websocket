@@ -4,6 +4,7 @@ import Chat from '../views/Chat.vue'
 import Doctors from '../views/Doctors.vue'
 import Welcome from '../views/Welcome.vue'
 import Login from '../views/Login.vue'
+import Patients from '../views/Patients.vue'
 
 Vue.use(VueRouter)
 
@@ -28,6 +29,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+  },
+  {
+    path: '/patients',
+    name: 'Patients',
+    component: Patients
   },
   {
     path: '/about',

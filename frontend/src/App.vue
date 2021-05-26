@@ -91,19 +91,6 @@
 
       <v-spacer></v-spacer>
 
-      <!--
-      <v-btn icon>
-        <v-icon>mdi-magnify</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>mdi-heart</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>mdi-dots-vertical</v-icon>
-      </v-btn>
-      -->
     </v-app-bar>
 
     <v-main>
@@ -129,7 +116,6 @@ export default {
           icon: "mdi-message-text",
           to: this.$cookie.get("previous-chat"),
         },
-        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
         { title: "Patients", icon: "mdi-clipboard-pulse", to: "/patients" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
@@ -139,6 +125,16 @@ export default {
           icon: "mdi-message-text",
           to: this.$cookie.get("previous-chat"),
         },
+        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
+        { title: "About", icon: "mdi-information", to: "/about" },
+      ],
+      adminItems: [
+        {
+          title: "Chat",
+          icon: "mdi-message-text",
+          to: this.$cookie.get("previous-chat"),
+        },
+        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
         { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
@@ -152,6 +148,9 @@ export default {
       this.$cookie.delete("previous-chat");
       this.$cookie.delete("type");
       this.$cookie.delete("avatar");
+      this.$cookie.delete("patient");
+      this.$cookie.delete("username");
+      this.$cookie.delete("doctor");
       this.$router.push({ name: "Welcome" });
       this.$router.go();
     },

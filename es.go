@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"log"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v7"
@@ -16,6 +17,7 @@ type esStruct struct {
 	esIndex string
 	patient string
 	doctor  string
+	sentBy  string
 	client  *elasticsearch.Client
 }
 
@@ -34,9 +36,11 @@ func index(es *esStruct) error {
 
 	// Build the request body.
 	var b strings.Builder
-	b.WriteString(`{"patient" : "` + es.patient +
+
+	b.WriteString(`{"patient": "` + es.patient +
 		`", "doctor": "` + es.doctor +
 		`", "msg": "` + es.msg +
+		`", "sentBy": "` + es.sentBy +
 		`", "date": "` + es.date +
 		`"}`)
 
@@ -48,9 +52,11 @@ func index(es *esStruct) error {
 
 	// Perform the request with the client.
 	res, err := req.Do(context.Background(), es.client)
-	if err != nil {
+	if res.StatusCode != 200 || err != nil {
+		log.Println(res)
 		return err
 	}
+
 	defer res.Body.Close()
 
 	return nil

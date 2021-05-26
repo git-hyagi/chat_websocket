@@ -7,7 +7,7 @@
         <v-list-item
           v-for="item in items"
           :key="item.title"
-          @click="updatePrevious(item.to)"
+          @click="updatePrevious(item)"
         >
           <v-list-item-content>
             <v-list-item-title v-text="item.title"></v-list-item-title>
@@ -24,8 +24,32 @@
 </template>
 
 <script>
-
 export default {
+  data() {
+    if (this.$cookie.get("user") == null) {
+      return { logged: false };
+    }
+
+    return {
+      server: "192.168.15.114:8080",
+      logged: true,
+      items: [
+        {
+          title: "Patch Adams",
+          subtitle: "Clínica",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
+          to: "/chat?q=padams",
+        },
+        {
+          title: "Elizabeth Blackwell",
+          subtitle: "",
+          avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
+          to: "/chat?q=elizabeth",
+        },
+      ],
+    };
+  },
+
   mounted() {
     let headers = {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -55,7 +79,7 @@ export default {
             subtitle: docJson.Subtitle,
             avatar: docJson.Avatar,
             to: "/chat?q=" + docJson.Username,
-            doctorName: docJson.Name,
+            doctorName: docJson.Username,
           };
           self.items.push(aux);
         }
@@ -67,34 +91,15 @@ export default {
         //self.$router.go();
       });
   },
-  data() {
-    if (this.$cookie.get("user") == null) {
-      return { logged: false };
-    }
 
-    return {
-      server: "192.168.0.14:8080",
-      logged: true,
-      items: [
-        {
-          title: "Patch Adams",
-          subtitle: "Clínica",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
-          to: "/chat?q=padams",
-        },
-        {
-          title: "Elizabeth Blackwell",
-          subtitle: "",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-          to: "/chat?q=elizabeth",
-        },
-      ],
-    };
-  },
   methods: {
     updatePrevious: function (item) {
-      this.$cookie.set("previous-chat", item);
-      this.$router.push(item);
+      this.$cookie.set("previous-chat", item.to);
+      this.$cookie.set("doctor", item.doctorName);
+      this.$cookie.set("patient", this.$cookie.get("username"));
+      this.$cookie.set("chatWith", item.doctorName);
+
+      this.$router.push(item.to);
       this.$router.go();
     },
   },

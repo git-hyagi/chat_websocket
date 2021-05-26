@@ -17,6 +17,7 @@ type User struct {
 	Type     string
 	Subtitle string
 	Avatar   string
+	Patients int
 	DbConnection
 }
 
@@ -59,7 +60,31 @@ func (db *DbConnection) GetDoctors() ([]User, error) {
 
 	for rows.Next() {
 		aux := User{}
-		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar)
+		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar, &aux.Patients)
+		user = append(user, aux)
+		if err != nil {
+			//db.Close()
+			return []User{}, err
+		}
+	}
+
+	rows.Close()
+	return user, nil
+}
+
+// GetPatients from a doctor (need to improve table schema)
+func (db *DbConnection) GetPatients(doctor string) ([]User, error) {
+
+	rows, err := db.Query("SELECT * FROM users WHERE username IN (SELECT p.username FROM patients AS p JOIN users AS u ON p.id = u.patients WHERE u.name = '" + doctor + "')")
+	if err != nil {
+		return []User{}, err
+	}
+
+	user := []User{}
+
+	for rows.Next() {
+		aux := User{}
+		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar, &aux.Patients)
 		user = append(user, aux)
 		if err != nil {
 			//db.Close()

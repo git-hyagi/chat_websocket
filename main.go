@@ -28,6 +28,7 @@ type msg struct {
 	When    time.Time
 	Doctor  string
 	Patient string
+	SentBy  string
 }
 
 // websocket struct
@@ -49,6 +50,14 @@ type doctor struct {
 	Name     string
 	Password string
 	Subtitle string
+	Avatar   string
+}
+
+type patients struct {
+	db.User
+	Username string
+	Name     string
+	Password string
 	Avatar   string
 }
 
@@ -91,6 +100,9 @@ func main() {
 	doctor := &doctor{}
 	doctor.DB = database
 
+	patients := &patients{}
+	patients.DB = database
+
 	// websocket struct
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 
@@ -100,6 +112,7 @@ func main() {
 	r.Handle("/ws/{doctor}/{patient}", webSkt)
 	r.Handle("/login", user)
 	r.Handle("/doctors", doctor)
+	r.Handle("/patients/{doctor}", patients)
 
 	go http.ListenAndServe(port, r)
 
@@ -124,7 +137,8 @@ func main() {
 // ServeHTTP creates the websocket
 func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	webSkt.esIndex = "chat-" + mux.Vars(r)["doctor"]
+	//webSkt.esIndex = mux.Vars(r)["patient"] + "-" + mux.Vars(r)["doctor"]
+	webSkt.esIndex = "telemedicine"
 	webSkt.doctor = mux.Vars(r)["doctor"]
 	webSkt.patient = mux.Vars(r)["patient"]
 
@@ -174,6 +188,12 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "user",
 			Value:    url.QueryEscape(name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
+			SameSite: http.SameSiteNoneMode,
+			//Path:     "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "username",
+			Value:    userLogin.Name,
 			SameSite: http.SameSiteNoneMode,
 			//Path:     "/",
 		})
@@ -255,7 +275,8 @@ func (webSkt *wsStruct) newConnections() {
 				aux := msg{
 					Message: hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string),
 					When:    msgDate,
-					Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
+					//Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
+					Name: hit.(map[string]interface{})["_source"].(map[string]interface{})["sentBy"].(string),
 					//Name:    "TMP",
 					Doctor:  hit.(map[string]interface{})["_source"].(map[string]interface{})["doctor"].(string),
 					Patient: hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
@@ -282,7 +303,6 @@ func (webSkt *wsStruct) newConnections() {
 					return
 				}
 			}
-
 		}
 
 		go webSkt.rcvMsg(ws)
@@ -310,17 +330,18 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		var jsonMsg msg
 		json.Unmarshal(p, &jsonMsg)
 		jsonMsg.Message = strings.Replace(jsonMsg.Message, "\n", "\\n", -1)
-
-		unescapeName, _ := url.QueryUnescape(jsonMsg.Name)
+		//unescapeName, _ := url.QueryUnescape(jsonMsg.Name)
 
 		// publish the message on redis pubsub channel
-		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+unescapeName+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
+		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+jsonMsg.SentBy+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
 
 		// define the elasticsearch fields
-		webSkt.esStruct.patient = unescapeName
+		webSkt.esStruct.patient = jsonMsg.Patient
+		webSkt.esStruct.doctor = jsonMsg.Doctor
+		webSkt.esStruct.sentBy = jsonMsg.SentBy
 		webSkt.esStruct.msg = strings.TrimRight(string(jsonMsg.Message), "\r\n")
 		webSkt.esStruct.date = date
 
@@ -353,15 +374,36 @@ func (webSkt *wsStruct) printMsg(msgChan chan string) {
 	}
 }
 
+// Get the list of doctors
 func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("NEW REQUEST!!")
 	//Allow CORS here By * or specific origin
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Content-Type", "application/json")
 
 	doc, err := d.GetDoctors()
+	if err != nil {
+		log.Println("no doc found!", err)
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	jsonMsg, _ := json.Marshal(doc)
+	w.Write(jsonMsg)
+	w.WriteHeader(http.StatusOK)
+
+}
+
+// Get the list of patients from a specific doctor
+func (p *patients) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	//Allow CORS here By * or specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Content-Type", "application/json")
+
+	unescapeName, _ := url.QueryUnescape(mux.Vars(r)["doctor"])
+	doc, err := p.GetPatients(unescapeName)
 	if err != nil {
 		log.Println("no doc found!", err)
 		w.WriteHeader(http.StatusNoContent)
@@ -413,7 +455,7 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
 	if os.Getenv("ES_HOST") != "" {
 		es.hosts = os.Getenv("ES_HOST")
 	} else {
-		es.hosts = "http://localhost:9200"
+		es.hosts = "http://localhost:9201"
 	}
 
 	return port, rdis, es

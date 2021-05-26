@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div class="pa-6">
-      <h1>Doctor</h1>
+      <h1>{{chatWith}}</h1>
     </div>
 
     <ul id="list-of-messages" style="list-style-type: none">
@@ -45,10 +45,12 @@ export default {
 
     return {
       logged: true,
-      doctor: this.query,
+      doctor: this.$cookie.get("doctor"),
+      patient: this.$cookie.get("patient"),
+      chatWith: this.$cookie.get("chatWith"),
       counter: 150,
       message: "",
-      server: "192.168.0.14:8080",
+      server: "192.168.15.114:8080",
       messages: [],
       msgRules: [
         (v) =>
@@ -78,26 +80,41 @@ export default {
         return false;
       }
       if (this.message !== "") {
-        this.socket.send(
-          JSON.stringify({
-            Message: this.message,
-            Name: this.$cookie.get("user"),
-          })
-        );
+        if (this.$cookie.get("type") == "doctor") {
+          this.socket.send(
+            JSON.stringify({
+              Message: this.message,
+              Doctor: decodeURI(this.$cookie.get("username")),
+              Patient: decodeURI(this.$cookie.get("patient")),
+              SentBy: decodeURI(this.$cookie.get("username")),
+            })
+          );
+        } else {
+          this.socket.send(
+            JSON.stringify({
+              Message: this.message,
+              Patient: decodeURI(this.$cookie.get("username")),
+              Doctor: decodeURI(this.$cookie.get("doctor")),
+              SentBy: decodeURI(this.$cookie.get("username")),
+            })
+          );
+        }
+
         this.message = "";
         return false;
       }
     },
     webSocket: function () {
-      console.log(this.doctor);
-      this.socket = new WebSocket(
+      var websocketAddress =
         "ws://" +
-          this.server +
-          "/ws/" +
-          this.doctor +
-          "/" +
-          this.$cookie.get("user")
-      );
+        this.server +
+        "/ws/" +
+        this.doctor +
+        "/" +
+        this.patient;
+
+      this.socket = new WebSocket(websocketAddress);
+
       this.socket.onclose = function () {
         console.error("Connection has been closed.");
       };
