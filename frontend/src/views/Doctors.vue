@@ -3,7 +3,6 @@
     <h1 class="pa-6">Doctors</h1>
     <v-card max-width="500" class="mx-auto" v-if="logged">
       <v-list>
-        <!-- <v-list-item v-for="item in items" :key="item.title"  :to="item.to"> -->
         <v-list-item
           v-for="item in items"
           :key="item.title"
@@ -33,20 +32,7 @@ export default {
     return {
       server: "192.168.15.114:8080",
       logged: true,
-      items: [
-        {
-          title: "Patch Adams",
-          subtitle: "Clínica",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/2.jpg",
-          to: "/chat?q=padams",
-        },
-        {
-          title: "Elizabeth Blackwell",
-          subtitle: "",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/4.jpg",
-          to: "/chat?q=elizabeth",
-        },
-      ],
+      items: [],
     };
   },
 
@@ -66,14 +52,11 @@ export default {
         }
       )
       .then(function (response) {
-        let i, j;
-        console.log(response.data.length);
-
+        let i;
         for (i = 0; i < response.data.length; i++) {
           var aux;
           var doctors = JSON.stringify(response.data[i]);
           var docJson = JSON.parse(doctors);
-
           aux = {
             title: docJson.Name,
             subtitle: docJson.Subtitle,

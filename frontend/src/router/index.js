@@ -5,6 +5,7 @@ import Doctors from '../views/Doctors.vue'
 import Welcome from '../views/Welcome.vue'
 import Login from '../views/Login.vue'
 import Patients from '../views/Patients.vue'
+import About from '../views/About.vue'
 
 Vue.use(VueRouter)
 
@@ -38,11 +39,8 @@ const routes = [
   {
     path: '/about',
     name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
+    component: About
+  },
 ]
 
 const router = new VueRouter({

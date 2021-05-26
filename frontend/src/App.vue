@@ -10,40 +10,58 @@
 
       <v-divider></v-divider>
 
-      <v-list dense nav>
-        <span v-if="type == 'doctor'">
-          <v-list-item
-            v-for="item in docItems"
-            :key="item.title"
-            :to="item.to"
-            link
-          >
-            <v-list-item-icon>
-              <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
-            </v-list-item-icon>
+      <template v-if="logged !== true">
+        <v-list dense nav>
+          <span v-if="type == 'doctor'">
+            <v-list-item
+              v-for="item in docItems"
+              :key="item.title"
+              :to="item.to"
+              link
+            >
+              <v-list-item-icon>
+                <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+              </v-list-item-icon>
 
-            <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </span>
-        <span v-else>
-          <v-list-item
-            v-for="item in patientItems"
-            :key="item.title"
-            :to="item.to"
-            link
-          >
-            <v-list-item-icon>
-              <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
-            </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>{{ item.title }}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </span>
+          <span v-else>
+            <v-list-item
+              v-for="item in patientItems"
+              :key="item.title"
+              :to="item.to"
+              link
+            >
+              <v-list-item-icon>
+                <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+              </v-list-item-icon>
 
-            <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </span>
-      </v-list>
+              <v-list-item-content>
+                <v-list-item-title>{{ item.title }}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </span>
+        </v-list>
+      </template>
+      <template v-else>
+        <v-list-item
+          v-for="item in notLogged"
+          :key="item.title"
+          :to="item.to"
+          link
+        >
+          <v-list-item-icon>
+            <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item></template
+      >
 
       <template v-slot:append>
         <div class="pa-2">
@@ -90,7 +108,6 @@
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
-
     </v-app-bar>
 
     <v-main>
@@ -138,6 +155,7 @@ export default {
         { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
+      notLogged: [{ title: "About", icon: "mdi-information", to: "/about" }],
     };
   },
   methods: {
