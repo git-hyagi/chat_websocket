@@ -61,6 +61,9 @@ type patients struct {
 	Avatar   string
 }
 
+//const corsServer = "http://chatserver:8000"
+const corsServer = "http://localhost:8081"
+
 func main() {
 	var err error
 	log.SetFlags(log.Ltime | log.Lshortfile)
@@ -167,7 +170,7 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var userLogin db.User
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Origin", corsServer)
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if err := json.NewDecoder(r.Body).Decode(&userLogin); err != nil {
@@ -378,7 +381,7 @@ func (webSkt *wsStruct) printMsg(msgChan chan string) {
 func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Origin", corsServer)
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -398,7 +401,7 @@ func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (p *patients) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Origin", corsServer)
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Content-Type", "application/json")
 

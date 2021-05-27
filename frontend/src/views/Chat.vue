@@ -50,7 +50,7 @@ export default {
       chatWith: this.$cookie.get("chatWith"),
       counter: 150,
       message: "",
-      server: "192.168.15.114:8080",
+      server: "chatserver:8080",
       messages: [],
       msgRules: [
         (v) =>

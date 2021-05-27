@@ -28,9 +28,26 @@
               </v-list-item-content>
             </v-list-item>
           </span>
-          <span v-else>
+          <span v-else-if="type == 'patient'">
             <v-list-item
               v-for="item in patientItems"
+              :key="item.title"
+              :to="item.to"
+              link
+            >
+              <v-list-item-icon>
+                <v-icon color="teal darken-2">{{ item.icon }}</v-icon>
+              </v-list-item-icon>
+
+              <v-list-item-content>
+                <v-list-item-title>{{ item.title }}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </span>
+
+          <span v-else-if="type == 'admin'">
+            <v-list-item
+              v-for="item in adminItems"
               :key="item.title"
               :to="item.to"
               link
@@ -151,11 +168,19 @@ export default {
           icon: "mdi-message-text",
           to: this.$cookie.get("previous-chat"),
         },
+        { title: "Admin", icon: "mdi-shield-account", to: "/admin" },
         { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
-        { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
+        { title: "Patients", icon: "mdi-clipboard-pulse", to: "/patients" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
-      notLogged: [{ title: "About", icon: "mdi-information", to: "/about" }],
+      notLogged: [
+        {
+          title: "Register",
+          icon: "mdi-account-plus-outline",
+          to: "/register",
+        },
+        { title: "About", icon: "mdi-information", to: "/about" },
+      ],
     };
   },
   methods: {

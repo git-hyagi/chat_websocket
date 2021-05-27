@@ -6,6 +6,8 @@ import Welcome from '../views/Welcome.vue'
 import Login from '../views/Login.vue'
 import Patients from '../views/Patients.vue'
 import About from '../views/About.vue'
+import Admin from '../views/Admins.vue'
+import Register from '../views/Register.vue'
 
 Vue.use(VueRouter)
 
@@ -35,6 +37,16 @@ const routes = [
     path: '/patients',
     name: 'Patients',
     component: Patients
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: Admin
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
   },
   {
     path: '/about',
