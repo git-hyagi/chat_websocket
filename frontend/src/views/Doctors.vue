@@ -6,7 +6,7 @@
         <v-list-item
           v-for="item in items"
           :key="item.title"
-          @click="updatePrevious(item)"
+          @click="updateCookie(item)"
         >
           <v-list-item-content>
             <v-list-item-title v-text="item.title"></v-list-item-title>
@@ -62,7 +62,7 @@ export default {
             subtitle: docJson.Subtitle,
             avatar: docJson.Avatar,
             to: "/chat?q=" + docJson.Username,
-            doctorName: docJson.Username,
+            doctorName: docJson.Name,
           };
           self.items.push(aux);
         }
@@ -76,7 +76,7 @@ export default {
   },
 
   methods: {
-    updatePrevious: function (item) {
+    updateCookie: function (item) {
       this.$cookie.set("previous-chat", item.to);
       this.$cookie.set("doctor", item.doctorName);
       this.$cookie.set("patient", this.$cookie.get("username"));

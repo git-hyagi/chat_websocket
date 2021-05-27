@@ -16,6 +16,7 @@
         label="Password"
         required
         class="mb-5"
+        @keydown="sendEnter"
       ></v-text-field>
 
       <v-btn color="cyan darken-1 white--text" class="mr-4" @click="validate">
@@ -24,6 +25,16 @@
 
       <v-btn color="darken-1" class="mr-4" to="/register"> Register </v-btn>
     </v-form>
+
+    <v-snackbar v-model="snackbar">
+      {{ loginErr }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn color="pink" text v-bind="attrs" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -36,9 +47,19 @@ export default {
     nameRules: [(v) => !!v || "Name is required"],
     password: "",
     passwordRules: [(v) => !!v || "Password is required"],
+    loginErr: "Login failed!",
+    snackbar: false,
   }),
   mounted() {},
   methods: {
+    sendEnter: function (e) {
+      // if pressed enter, just call the same method as from the send button
+      if (e.keyCode === 13) {
+        // Cancel the default action, if needed
+        e.preventDefault();
+        this.validate();
+      }
+    },
     validate() {
       let self = this;
       let data = { name: this.name, password: this.password };
@@ -56,9 +77,9 @@ export default {
           self.$router.go();
         })
         .catch(function (error) {
+          self.snackbar = true;
           console.log(error);
-          alert("Login failed!");
-          self.$router.go();
+          self.$refs.form.reset();
         });
     },
   },

@@ -6,7 +6,7 @@
         <v-list-item
           v-for="item in items"
           :key="item.title"
-          @click="chatPage(item)"
+          @click="updateCookie(item)"
         >
           <v-list-item-content>
             <v-list-item-title v-text="item.title"></v-list-item-title>
@@ -76,7 +76,7 @@ export default {
   },
 
   methods: {
-    chatPage: function (item) {
+    updateCookie: function (item) {
       this.$cookie.set("patient", item.patient);
       this.$cookie.set("doctor", this.$cookie.get("username"));
       this.$cookie.set("chatWith", item.patient);

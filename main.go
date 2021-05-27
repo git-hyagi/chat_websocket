@@ -196,8 +196,9 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if userLogin.Password == password {
 		http.SetCookie(w, &http.Cookie{
-			Name:     "user",
-			Value:    url.QueryEscape(name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
+			Name: "user",
+			//Value:    url.QueryEscape(name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
+			Value:    (&url.URL{Path: name}).String(), //encode ' ' as %20 instead of +
 			SameSite: http.SameSiteNoneMode,
 			//Path:     "/",
 		})
@@ -240,7 +241,6 @@ func (webSkt *wsStruct) newConnections() {
 
 		//func retrieveMessages(lastNMsg int, patient, doctor string, es *esStruct) ([]msg, error) {
 		esMsgs, _ := retrieveMessages(lastNMsg, webSkt.patient, webSkt.doctor, &webSkt.esStruct)
-
 
 		// iterate over the messages from slice
 		for i := range esMsgs {
@@ -286,7 +286,7 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		var jsonMsg msg
 		json.Unmarshal(p, &jsonMsg)
 		jsonMsg.Message = strings.Replace(jsonMsg.Message, "\n", "\\n", -1)
-		//unescapeName, _ := url.QueryUnescape(jsonMsg.Name)
+		jsonMsg.SentBy = strings.Replace(jsonMsg.SentBy, "+", " ", -1)
 
 		// publish the message on redis pubsub channel
 		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+jsonMsg.SentBy+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()

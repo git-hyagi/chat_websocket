@@ -125,7 +125,7 @@ func retrieveMessages(lastNMsg int, patient, doctor string, es *esStruct) ([]msg
 		for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
 
 			// convert it to time.Time because of msg.When field type
-			msgDate, _ := time.Parse(hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string), "2006-01-02T15:04:05Z")
+			msgDate, _ := time.Parse("2006-01-02T15:04:05Z", hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string))
 			aux := msg{
 				Message: hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string),
 				When:    msgDate,

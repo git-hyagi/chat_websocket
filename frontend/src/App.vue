@@ -133,7 +133,7 @@
 
       <template v-else>
         <v-avatar>
-          <img :src='avatar'/>
+          <img :src="avatar" />
         </v-avatar>
 
         <v-btn icon @click="logout">
@@ -151,13 +151,17 @@
 <script>
 export default {
   computed: {
-    logged: function () {
-      return this.$cookie.get("user") == null ? true : false;
+    logged: {
+      get: function () {
+        return this.$cookie.get("user") == null ? true : false;
+      },
+      set: function (value) {
+        return value;
+      },
     },
   },
   data() {
     return {
-      drawer: null,
       avatar: this.$cookie.get("avatar"),
       type: this.$cookie.get("type"),
       docItems: [
@@ -197,11 +201,12 @@ export default {
         },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
+
+      drawer: null,
     };
   },
   methods: {
     logout() {
-      alert("logging out ...");
       this.$cookie.delete("user");
       this.$cookie.delete("password");
       this.$cookie.delete("previous-chat");
@@ -210,7 +215,10 @@ export default {
       this.$cookie.delete("patient");
       this.$cookie.delete("username");
       this.$cookie.delete("doctor");
-      this.$router.push({ name: "Welcome" });
+
+      if (this.$route.name != "Welcome") {
+        this.$router.push({ name: "Welcome" });
+      }
       this.$router.go();
     },
   },

@@ -86,7 +86,7 @@ export default {
               Message: this.message,
               Doctor: decodeURI(this.$cookie.get("username")),
               Patient: decodeURI(this.$cookie.get("patient")),
-              SentBy: decodeURI(this.$cookie.get("username")),
+              SentBy: decodeURI(this.$cookie.get("user")),
             })
           );
         } else {
@@ -95,7 +95,7 @@ export default {
               Message: this.message,
               Patient: decodeURI(this.$cookie.get("username")),
               Doctor: decodeURI(this.$cookie.get("doctor")),
-              SentBy: decodeURI(this.$cookie.get("username")),
+              SentBy: decodeURI(this.$cookie.get("user")),
             })
           );
         }
