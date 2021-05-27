@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -17,6 +16,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
+
+//const corsServer = "http://chatserver:8000"
+const corsServer = "http://localhost:8081"
 
 // when client connects bring only the last `lastNMsg` messages
 const lastNMsg = 5
@@ -44,6 +46,10 @@ type user struct {
 	db.User
 }
 
+type register struct {
+	db.User
+}
+
 type doctor struct {
 	db.User
 	Username string
@@ -60,9 +66,6 @@ type patients struct {
 	Password string
 	Avatar   string
 }
-
-//const corsServer = "http://chatserver:8000"
-const corsServer = "http://localhost:8081"
 
 func main() {
 	var err error
@@ -106,6 +109,9 @@ func main() {
 	patients := &patients{}
 	patients.DB = database
 
+	register := &register{}
+	register.DB = database
+
 	// websocket struct
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 
@@ -116,6 +122,7 @@ func main() {
 	r.Handle("/login", user)
 	r.Handle("/doctors", doctor)
 	r.Handle("/patients/{doctor}", patients)
+	r.Handle("/register", register)
 
 	go http.ListenAndServe(port, r)
 
@@ -231,82 +238,28 @@ func (webSkt *wsStruct) newConnections() {
 		// received a new connection from channel
 		ws := <-webSkt.newConn
 
-		var r map[string]interface{}
-		var buf bytes.Buffer
-		var esMsgs []msg
+		//func retrieveMessages(lastNMsg int, patient, doctor string, es *esStruct) ([]msg, error) {
+		esMsgs, _ := retrieveMessages(lastNMsg, webSkt.patient, webSkt.doctor, &webSkt.esStruct)
 
-		// prepare the query
-		// - bring only the last N messages (const lastNMsg)
-		// - ordered by date (only the earliest messages)
-		// - matching patient with doctor
-		query := map[string]interface{}{
-			"size": lastNMsg,
-			"sort": map[string]interface{}{
-				"date": map[string]interface{}{
-					"order": "desc",
-				},
-			},
-			"query": map[string]interface{}{
-				"bool": map[string]interface{}{
-					"must": []map[string]interface{}{
-						{"match": map[string]interface{}{"patient": webSkt.patient}},
-						{"match": map[string]interface{}{"doctor": webSkt.doctor}},
-					},
-				},
-			},
-		}
 
-		if err := json.NewEncoder(&buf).Encode(query); err != nil {
-			log.Fatalf("[ERROR] Error encoding query: %s", err)
-		}
-		res, err := search(&webSkt.esStruct, buf)
-		if err != nil {
-			log.Fatalf("[ERROR] Error getting response: %s", err)
-		}
-		defer res.Body.Close()
+		// iterate over the messages from slice
+		for i := range esMsgs {
+			var jsonMsg msg
 
-		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-			log.Fatalf("[ERROR] Error parsing the response body: %s", err)
-		}
-
-		// return the history of messages only if they could be found on elasticsearch
-		if res.StatusCode != 404 {
-			for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
-
-				// convert it to time.Time because of msg.When field type
-				msgDate, _ := time.Parse(hit.(map[string]interface{})["_source"].(map[string]interface{})["date"].(string), "2006-01-02T15:04:05Z")
-				aux := msg{
-					Message: hit.(map[string]interface{})["_source"].(map[string]interface{})["msg"].(string),
-					When:    msgDate,
-					//Name:    hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
-					Name: hit.(map[string]interface{})["_source"].(map[string]interface{})["sentBy"].(string),
-					//Name:    "TMP",
-					Doctor:  hit.(map[string]interface{})["_source"].(map[string]interface{})["doctor"].(string),
-					Patient: hit.(map[string]interface{})["_source"].(map[string]interface{})["patient"].(string),
-				}
-
-				// store the elasticsearch results in a slice because the dates are in the wrong order
-				esMsgs = append(esMsgs, aux)
-			}
-
-			// iterate over the messages from slice
-			for i := range esMsgs {
-				var jsonMsg msg
-
-				// the decoding is made in the reverse order (from the last element to the first)
-				json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+
-					`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+
-					`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+
-					`", "Patient": "`+esMsgs[len(esMsgs)-1-i].Patient+
-					`", "Doctor": "`+esMsgs[len(esMsgs)-1-i].Doctor+
-					`"}`), &jsonMsg)
-				if err := ws.WriteJSON(jsonMsg); err != nil {
-					log.Println("[ERROR]", err)
-					delete(webSkt.listConn, ws)
-					return
-				}
+			// the decoding is made in the reverse order (from the last element to the first)
+			json.Unmarshal([]byte(`{"When": "`+esMsgs[len(esMsgs)-1-i].When.Format("2006-01-02T15:04:05Z")+
+				`","Name": "`+esMsgs[len(esMsgs)-1-i].Name+
+				`", "Message": "`+esMsgs[len(esMsgs)-1-i].Message+
+				`", "Patient": "`+esMsgs[len(esMsgs)-1-i].Patient+
+				`", "Doctor": "`+esMsgs[len(esMsgs)-1-i].Doctor+
+				`"}`), &jsonMsg)
+			if err := ws.WriteJSON(jsonMsg); err != nil {
+				log.Println("[ERROR]", err)
+				delete(webSkt.listConn, ws)
+				return
 			}
 		}
+		//}
 
 		go webSkt.rcvMsg(ws)
 	}
@@ -394,7 +347,6 @@ func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jsonMsg, _ := json.Marshal(doc)
 	w.Write(jsonMsg)
 	w.WriteHeader(http.StatusOK)
-
 }
 
 // Get the list of patients from a specific doctor
@@ -415,7 +367,30 @@ func (p *patients) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jsonMsg, _ := json.Marshal(doc)
 	w.Write(jsonMsg)
 	w.WriteHeader(http.StatusOK)
+}
 
+// Register a new user on database
+func (u *register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	var newUser db.User
+
+	//Allow CORS here By * or specific origin
+	w.Header().Set("Access-Control-Allow-Origin", corsServer)
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
+		log.Println(err)
+	}
+
+	// [TO DO] need to check if the user exists already
+	err := u.CreateUser(newUser.Username, newUser.Name, newUser.Password, newUser.Type, newUser.Subtitle, "")
+	if err != nil {
+		w.Write([]byte("Failed to create the user!"))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 // check if some environment variables were declared and if they did define

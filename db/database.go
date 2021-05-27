@@ -96,8 +96,15 @@ func (db *DbConnection) GetPatients(doctor string) ([]User, error) {
 	return user, nil
 }
 
-func (db *DbConnection) CreateDoctor(username, name, password, subtitle, avatar, patients string) error {
-	_, err := db.Exec("INSERT INTO users VALUES('" + username + "','" + name + "','" + password + "','doctor','" + subtitle + "','" + avatar + "','0')")
+func (db *DbConnection) CreateUser(username, name, password, userType, subtitle, avatar string) error {
+	_, err := db.Exec(`INSERT INTO users VALUES(
+		'` + username + `',
+		'` + name + `',
+		'` + password + `',
+		'` + userType + `',
+		'` + subtitle + `',
+		'` + avatar + `',
+		'0')`)
 	if err != nil {
 		return err
 	}

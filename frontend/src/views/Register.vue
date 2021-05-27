@@ -54,7 +54,7 @@
         ></v-text-field>
       </template>
 
-      <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate">
+      <v-btn :disabled="!valid" color="success" class="mr-4" @click="register">
         SUBMIT
       </v-btn>
     </v-form>
@@ -65,6 +65,8 @@
 export default {
   data() {
     return {
+      //server: "chatserver:8080",
+      server: "localhost:8080",
       valid: true,
       name: "",
       nameRules: [
@@ -86,7 +88,7 @@ export default {
 
       select: "",
       subtitle: "",
-      items: ["Doctor", "Patient"],
+      items: ["doctor", "patient"],
       doctor: false,
       subtitleRules: [
         (v) => !!v || "Username is required",
@@ -106,16 +108,42 @@ export default {
     },
 
     isDoctor() {
-      if (this.select == "Doctor") {
+      if (this.select == "doctor") {
         this.doctor = true;
       } else {
         this.doctor = false;
+        this.subtitle = "patient";
       }
       return true;
     },
 
-    validate() {
-      this.$refs.form.validate();
+    register() {
+      let self = this;
+      let data = {
+        username: this.username,
+        name: this.name,
+        password: this.password,
+        type: this.select,
+        subtitle: this.subtitle,
+      };
+      let headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+      };
+
+      this.$http
+        .post("http://" + this.server + "/register", data, {
+          headers: headers,
+          withCredentials: true,
+        })
+        .then(function (response) {
+          self.$router.push({ name: "Login" });
+          self.$router.go();
+        })
+        .catch(function (error) {
+          console.log(error);
+          alert("Failed to create user!");
+          self.$router.go();
+        });
     },
   },
 };
