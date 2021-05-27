@@ -125,6 +125,21 @@
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
+      <template v-if="logged">
+        <v-btn icon to="/Login">
+          <v-icon>mdi-login</v-icon>
+        </v-btn>
+      </template>
+
+      <template v-else>
+        <v-avatar>
+          <img :src='avatar'/>
+        </v-avatar>
+
+        <v-btn icon @click="logout">
+          <v-icon>mdi-logout</v-icon>
+        </v-btn>
+      </template>
     </v-app-bar>
 
     <v-main>
@@ -143,6 +158,7 @@ export default {
   data() {
     return {
       drawer: null,
+      avatar: this.$cookie.get("avatar"),
       type: this.$cookie.get("type"),
       docItems: [
         {

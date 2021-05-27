@@ -75,7 +75,9 @@ func (db *DbConnection) GetDoctors() ([]User, error) {
 // GetPatients from a doctor (need to improve table schema)
 func (db *DbConnection) GetPatients(doctor string) ([]User, error) {
 
-	rows, err := db.Query("SELECT * FROM users WHERE username IN (SELECT p.username FROM patients AS p JOIN users AS u ON p.id = u.patients WHERE u.name = '" + doctor + "')")
+	//rows, err := db.Query("SELECT * FROM users WHERE username IN (SELECT p.username FROM patients AS p JOIN users AS u ON p.id = u.patients WHERE u.name = '" + doctor + "')")
+	// temporarily workaround until find a way to automatically update the list of patients
+	rows, err := db.Query("SELECT * FROM users WHERE type = 'patient'")
 	if err != nil {
 		return []User{}, err
 	}

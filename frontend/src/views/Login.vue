@@ -21,6 +21,8 @@
       <v-btn color="cyan darken-1 white--text" class="mr-4" @click="validate">
         Login
       </v-btn>
+
+      <v-btn color="darken-1" class="mr-4" to="/register"> Register </v-btn>
     </v-form>
   </v-container>
 </template>
