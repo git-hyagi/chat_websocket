@@ -110,6 +110,7 @@ export default {
     isDoctor() {
       if (this.select == "doctor") {
         this.doctor = true;
+        this.subtitle = "";
       } else {
         this.doctor = false;
         this.subtitle = "patient";
@@ -118,14 +119,18 @@ export default {
     },
 
     register() {
-      let self = this;
+      var bcrypt = require("bcryptjs");
+
+      const hashPass = bcrypt.hashSync(this.password, 10);
       let data = {
         username: this.username,
         name: this.name,
-        password: this.password,
+        password: hashPass,
         type: this.select,
         subtitle: this.subtitle,
       };
+      console.log(data);
+
       let headers = {
         "Content-Type": "application/x-www-form-urlencoded",
       };
@@ -137,12 +142,12 @@ export default {
         })
         .then(function (response) {
           self.$router.push({ name: "Login" });
-          self.$router.go();
+          //self.$router.go();
         })
         .catch(function (error) {
           console.log(error);
           alert("Failed to create user!");
-          self.$router.go();
+          //self.$router.go();
         });
     },
   },

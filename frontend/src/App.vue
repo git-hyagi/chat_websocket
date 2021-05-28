@@ -208,7 +208,8 @@ export default {
   methods: {
     logout() {
       this.$cookie.delete("user");
-      this.$cookie.delete("password");
+      this.$cookie.delete("token");
+      this.$cookie.delete("chatWith");
       this.$cookie.delete("previous-chat");
       this.$cookie.delete("type");
       this.$cookie.delete("avatar");

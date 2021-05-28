@@ -39,18 +39,14 @@ export default {
   mounted() {
     let headers = {
       "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: "Bearer " + this.$cookie.get("token"),
     };
 
     self = this;
     this.$http
-      .get(
-        "http://" + this.server + "/doctors",
-        {},
-        {
-          headers: headers,
-          withCredentials: true,
-        }
-      )
+      .get("http://" + this.server + "/doctors", {
+        headers: headers,
+      })
       .then(function (response) {
         let i;
         for (i = 0; i < response.data.length; i++) {
@@ -71,7 +67,6 @@ export default {
         console.log(error);
         alert("Error looking for doctors!");
         self.$router.push({ name: "Welcome" });
-        //self.$router.go();
       });
   },
 

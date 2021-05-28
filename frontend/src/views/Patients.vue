@@ -39,18 +39,14 @@ export default {
   mounted() {
     let headers = {
       "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: "Bearer " + this.$cookie.get("token"),
     };
 
     self = this;
     this.$http
-      .get(
-        "http://" + this.server + "/patients/" + self.$cookie.get("user"),
-        {},
-        {
-          headers: headers,
-          withCredentials: true,
-        }
-      )
+      .get("http://" + this.server + "/patients/" + self.$cookie.get("user"), {
+        headers: headers,
+      })
       .then(function (response) {
         let i;
         for (i = 0; i < response.data.length; i++) {
@@ -71,7 +67,6 @@ export default {
         console.log(error);
         alert("Error looking for patients!");
         self.$router.push({ name: "Welcome" });
-        //self.$router.go();
       });
   },
 
@@ -79,7 +74,7 @@ export default {
     updateCookie: function (item) {
       this.$cookie.set("patient", item.patient);
       this.$cookie.set("doctor", this.$cookie.get("username"));
-      this.$cookie.set("chatWith", item.patient);
+      this.$cookie.set("chatWith", item.title);
       this.$cookie.set("previous-chat", item.to);
       this.$router.push(item.to);
       this.$router.go();

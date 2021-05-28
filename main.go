@@ -23,6 +23,9 @@ const corsServer = "http://localhost:8081"
 // when client connects bring only the last `lastNMsg` messages
 const lastNMsg = 5
 
+// temporarily secret key for sign jwt
+const secretKey = "1234567890"
+
 // message struct
 type msg struct {
 	Name    string
@@ -120,8 +123,8 @@ func main() {
 	r := mux.NewRouter()
 	r.Handle("/ws/{doctor}/{patient}", webSkt)
 	r.Handle("/login", user)
-	r.Handle("/doctors", doctor)
-	r.Handle("/patients/{doctor}", patients)
+	r.Handle("/doctors", MustAuth(doctor))
+	r.Handle("/patients/{doctor}", MustAuth(patients))
 	r.Handle("/register", register)
 
 	go http.ListenAndServe(port, r)
@@ -147,7 +150,6 @@ func main() {
 // ServeHTTP creates the websocket
 func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	//webSkt.esIndex = mux.Vars(r)["patient"] + "-" + mux.Vars(r)["doctor"]
 	webSkt.esIndex = "telemedicine"
 	webSkt.doctor = mux.Vars(r)["doctor"]
 	webSkt.patient = mux.Vars(r)["patient"]
@@ -194,37 +196,35 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name, _ := user.GetAttribute(userLogin.Name, "name")
 	avatar, _ := user.GetAttribute(userLogin.Name, "avatar")
 
+	// test jwt without expiration
+	jwt := &JWTManager{secretKey, 8760 * time.Hour}
+	token, _ := jwt.Generate(userLogin.Name, userType, avatar)
+
 	if userLogin.Password == password {
 		http.SetCookie(w, &http.Cookie{
-			Name: "user",
-			//Value:    url.QueryEscape(name), //cookie v0 should not contain spaces, to avoid that we are using the "url encode/queryescape"
+			Name:     "user",
 			Value:    (&url.URL{Path: name}).String(), //encode ' ' as %20 instead of +
 			SameSite: http.SameSiteNoneMode,
-			//Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "username",
 			Value:    userLogin.Name,
 			SameSite: http.SameSiteNoneMode,
-			//Path:     "/",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:     "password",
-			Value:    password,
-			SameSite: http.SameSiteNoneMode,
-			//Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "type",
 			Value:    userType,
 			SameSite: http.SameSiteNoneMode,
-			//Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "avatar",
 			Value:    avatar,
 			SameSite: http.SameSiteNoneMode,
-			//Path:     "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "token",
+			Value:    token,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		w.WriteHeader(http.StatusOK)

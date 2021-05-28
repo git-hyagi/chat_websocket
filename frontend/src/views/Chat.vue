@@ -6,7 +6,7 @@
 
     <ul id="list-of-messages" style="list-style-type: none">
       <li v-for="item in messages" :key="item.Message">
-        [ {{ item.When }} ] <strong>{{ item.Name }}</strong
+        <span class="font-weight-thin">[ {{ item.When }} ]</span> <strong>{{ item.Name }}</strong
         >: {{ item.Message }}
       </li>
     </ul>
