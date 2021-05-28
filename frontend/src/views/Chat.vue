@@ -1,12 +1,13 @@
 <template>
   <v-container>
     <div class="pa-6">
-      <h1>{{chatWith}}</h1>
+      <h1>{{ chatWith }}</h1>
     </div>
 
     <ul id="list-of-messages" style="list-style-type: none">
       <li v-for="item in messages" :key="item.Message">
-        <span class="font-weight-thin">[ {{ item.When }} ]</span> <strong>{{ item.Name }}</strong
+        <span class="font-weight-thin">[ {{ item.When }} ]</span>
+        <strong>{{ item.Name }}</strong
         >: {{ item.Message }}
       </li>
     </ul>
@@ -44,13 +45,13 @@ export default {
     }
 
     return {
+      server: "chatserver:8080",
       logged: true,
       doctor: this.$cookie.get("doctor"),
       patient: this.$cookie.get("patient"),
       chatWith: this.$cookie.get("chatWith"),
       counter: 150,
       message: "",
-      server: "chatserver:8080",
       messages: [],
       msgRules: [
         (v) =>
@@ -106,12 +107,7 @@ export default {
     },
     webSocket: function () {
       var websocketAddress =
-        "ws://" +
-        this.server +
-        "/ws/" +
-        this.doctor +
-        "/" +
-        this.patient;
+        "ws://" + this.server + "/ws/" + this.doctor + "/" + this.patient;
 
       this.socket = new WebSocket(websocketAddress);
 

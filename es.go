@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"strings"
 	"time"
 
@@ -56,9 +56,8 @@ func index(es *esStruct) error {
 
 	// Perform the request with the client.
 	res, err := req.Do(context.Background(), es.client)
-	if res.StatusCode != 200 || err != nil {
-		log.Println(res)
-		return err
+	if res.StatusCode != 200 && res.StatusCode != 201 || err != nil {
+		return fmt.Errorf("[ERROR] %s\n%s", err, res)
 	}
 
 	defer res.Body.Close()
@@ -105,19 +104,16 @@ func retrieveMessages(lastNMsg int, patient, doctor string, es *esStruct) ([]msg
 	}
 
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Fatalf("[ERROR] Error encoding query: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("[ERROR] Error encoding query: %s", err)
 	}
 	res, err := search(es, buf)
 	if err != nil {
-		log.Fatalf("[ERROR] Error getting response: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("[ERROR] Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Fatalf("[ERROR] Error parsing the response body: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("[ERROR] Error parsing the response body: %s", err)
 	}
 
 	// return the history of messages only if they could be found on elasticsearch

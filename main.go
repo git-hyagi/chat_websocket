@@ -100,6 +100,7 @@ func main() {
 		log.Fatalln("[FATAL] Error on ES connection", err)
 	}
 
+	log.Println("[INFO] Connecting to mariadb ...")
 	database, err := db.Connect(dbCred.Database, dbCred.User, dbCred.Password, dbCred.Host+":"+dbCred.Port)
 	if err != nil {
 		log.Fatalln("[FATAL] Error on database conncetion", err)
@@ -143,7 +144,7 @@ func main() {
 	for {
 		pubSubMsg = rdis.client.Subscribe(ctx, rdis.channel).Channel()
 		for redisMsg := range pubSubMsg {
-			log.Println("[INFO] New msg from redis. channel:", redisMsg.Channel, "payload:", redisMsg.Payload)
+			//log.Println("[INFO] New msg from redis. channel:", redisMsg.Channel, "payload:", redisMsg.Payload)
 			msg <- redisMsg.Payload
 		}
 	}
@@ -239,9 +240,8 @@ func (webSkt *wsStruct) newConnections() {
 	for {
 		// received a new connection from channel
 		ws := <-webSkt.newConn
-
 		esMsgs, _ := retrieveMessages(lastNMsg, webSkt.patient, webSkt.doctor, &webSkt.esStruct)
-		log.Println(esMsgs)
+
 		// iterate over the messages from slice
 		for i := range esMsgs {
 			var jsonMsg msg
@@ -340,8 +340,7 @@ func (d *doctor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	doc, err := d.GetDoctors()
 	if err != nil {
-		log.Println("no doc found!", err)
-		w.WriteHeader(http.StatusNoContent)
+		http.Error(w, err.Error(), http.StatusNoContent)
 	}
 
 	jsonMsg, _ := json.Marshal(doc)
@@ -360,8 +359,7 @@ func (p *patients) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	unescapeName, _ := url.QueryUnescape(mux.Vars(r)["doctor"])
 	doc, err := p.GetPatients(unescapeName)
 	if err != nil {
-		log.Println("no doc found!", err)
-		w.WriteHeader(http.StatusNoContent)
+		http.Error(w, err.Error(), http.StatusNoContent)
 	}
 
 	jsonMsg, _ := json.Marshal(doc)
@@ -380,6 +378,9 @@ func (u *register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
 		log.Println(err)
+		w.Write([]byte("Failed to create the user!"))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	err := u.CreateUser(newUser.Username, newUser.Name, newUser.Password, newUser.Type, newUser.Subtitle, "")

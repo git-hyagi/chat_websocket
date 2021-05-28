@@ -42,8 +42,8 @@
 <script>
 export default {
   data: () => ({
-    //server: "chatserver:8080",
-    server: "localhost:8080",
+    server: "chatserver:8080",
+    //server: "localhost:8080",
     name: "",
     nameRules: [(v) => !!v || "Name is required"],
     password: "",

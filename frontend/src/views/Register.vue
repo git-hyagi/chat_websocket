@@ -67,8 +67,8 @@
 export default {
   data() {
     return {
-      //server: "chatserver:8080",
-      server: "localhost:8080",
+      server: "chatserver:8080",
+      //server: "localhost:8080",
       valid: true,
       name: "",
       nameRules: [
