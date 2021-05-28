@@ -10,6 +10,14 @@ type DbConnection struct {
 	*sql.DB
 }
 
+type DbServer struct {
+	User     string
+	Password string
+	Host     string
+	Port     string
+	Database string
+}
+
 type User struct {
 	Username string
 	Name     string

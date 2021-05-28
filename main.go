@@ -18,8 +18,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//const corsServer = "http://chatserver:8000"
-const corsServer = "http://localhost:8081"
+const corsServer = "http://chatserver:8000"
+
+//const corsServer = "http://localhost:8081"
 
 // when client connects bring only the last `lastNMsg` messages
 const lastNMsg = 5
@@ -76,7 +77,7 @@ func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 
 	// websocket port,redis struct, es struct
-	port, rdis, es := getEnvVars()
+	port, rdis, es, dbCred := getEnvVars()
 
 	// context used by redis
 	var ctx = context.Background()
@@ -99,7 +100,7 @@ func main() {
 		log.Fatalln("[FATAL] Error on ES connection", err)
 	}
 
-	database, err := db.Connect("telemedicine", "root", "password", "localhost:3306")
+	database, err := db.Connect(dbCred.Database, dbCred.User, dbCred.Password, dbCred.Host+":"+dbCred.Port)
 	if err != nil {
 		log.Fatalln("[FATAL] Error on database conncetion", err)
 	}
@@ -239,9 +240,8 @@ func (webSkt *wsStruct) newConnections() {
 		// received a new connection from channel
 		ws := <-webSkt.newConn
 
-		//func retrieveMessages(lastNMsg int, patient, doctor string, es *esStruct) ([]msg, error) {
 		esMsgs, _ := retrieveMessages(lastNMsg, webSkt.patient, webSkt.doctor, &webSkt.esStruct)
-
+		log.Println(esMsgs)
 		// iterate over the messages from slice
 		for i := range esMsgs {
 			var jsonMsg msg
@@ -396,10 +396,11 @@ func (u *register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // check if some environment variables were declared and if they did define
 // the vars with their contents
-func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
+func getEnvVars() (port string, rdis *redisStruct, es *esStruct, dbServer *db.DbServer) {
 
 	rdis = &redisStruct{}
 	es = &esStruct{}
+	dbServer = &db.DbServer{}
 
 	if os.Getenv("CHAT_PORT") != "" {
 		port = os.Getenv("CHAT_PORT")
@@ -410,7 +411,7 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
 	if os.Getenv("REDIS_ADDR") != "" {
 		(*rdis).addr = os.Getenv("REDIS_ADDR")
 	} else {
-		(*rdis).addr = "localhost:6379"
+		(*rdis).addr = "chatserver:6379"
 	}
 
 	if os.Getenv("REDIS_PASS") != "" {
@@ -434,8 +435,34 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct) {
 	if os.Getenv("ES_HOST") != "" {
 		es.hosts = os.Getenv("ES_HOST")
 	} else {
-		es.hosts = "http://localhost:9201"
+		es.hosts = "http://chatserver:9201"
 	}
 
-	return port, rdis, es
+	if os.Getenv("DB_HOST") != "" {
+		dbServer.Host = os.Getenv("DB_HOST")
+	} else {
+		dbServer.Host = "chatserver"
+	}
+	if os.Getenv("DB_PORT") != "" {
+		dbServer.Port = os.Getenv("DB_PORT")
+	} else {
+		dbServer.Port = "3306"
+	}
+	if os.Getenv("DB_USER") != "" {
+		dbServer.User = os.Getenv("DB_USER")
+	} else {
+		dbServer.User = "root"
+	}
+	if os.Getenv("DB_PASSWORD") != "" {
+		dbServer.Password = os.Getenv("DB_PASSWORD")
+	} else {
+		dbServer.Password = "password"
+	}
+	if os.Getenv("DB_DATABASE") != "" {
+		dbServer.Database = os.Getenv("DB_DATABASE")
+	} else {
+		dbServer.Database = "telemedicine"
+	}
+
+	return port, rdis, es, dbServer
 }
