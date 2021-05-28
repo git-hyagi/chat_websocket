@@ -20,6 +20,7 @@
       ></v-text-field>
 
       <v-text-field
+        type="password"
         v-model="password"
         :counter="50"
         :rules="passwordRules"
@@ -28,6 +29,7 @@
       ></v-text-field>
 
       <v-text-field
+        type="password"
         v-model="passConfirm"
         :counter="50"
         :rules="[checkPass]"
@@ -119,6 +121,7 @@ export default {
     },
 
     register() {
+      let self = this;
       var bcrypt = require("bcryptjs");
 
       const hashPass = bcrypt.hashSync(this.password, 10);
@@ -129,7 +132,6 @@ export default {
         type: this.select,
         subtitle: this.subtitle,
       };
-      console.log(data);
 
       let headers = {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -138,16 +140,14 @@ export default {
       this.$http
         .post("http://" + this.server + "/register", data, {
           headers: headers,
-          withCredentials: true,
         })
-        .then(function (response) {
+        .then(function () {
           self.$router.push({ name: "Login" });
-          //self.$router.go();
         })
         .catch(function (error) {
           console.log(error);
           alert("Failed to create user!");
-          //self.$router.go();
+          self.$router.go();
         });
     },
   },

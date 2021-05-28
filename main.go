@@ -15,6 +15,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //const corsServer = "http://chatserver:8000"
@@ -200,7 +201,9 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jwt := &JWTManager{secretKey, 8760 * time.Hour}
 	token, _ := jwt.Generate(userLogin.Name, userType, avatar)
 
-	if userLogin.Password == password {
+	if err = bcrypt.CompareHashAndPassword([]byte(password), []byte(userLogin.Password)); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+	} else {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "user",
 			Value:    (&url.URL{Path: name}).String(), //encode ' ' as %20 instead of +
@@ -226,10 +229,7 @@ func (user *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Value:    token,
 			SameSite: http.SameSiteNoneMode,
 		})
-
 		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -382,14 +382,15 @@ func (u *register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	// [TO DO] need to check if the user exists already
 	err := u.CreateUser(newUser.Username, newUser.Name, newUser.Password, newUser.Type, newUser.Subtitle, "")
 	if err != nil {
+		log.Println("[ERROR] Create User err: ", err)
 		w.Write([]byte("Failed to create the user!"))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	w.Write([]byte("created"))
 	w.WriteHeader(http.StatusCreated)
 }
 

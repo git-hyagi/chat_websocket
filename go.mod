@@ -10,4 +10,5 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )
