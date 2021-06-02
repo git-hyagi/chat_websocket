@@ -58,7 +58,7 @@ func (db *DbConnection) GetAttribute(username, attribute string) (string, error)
 
 // GetDoctors
 func (db *DbConnection) GetDoctors() ([]User, error) {
-	rows, err := db.Query("SELECT * from users WHERE type = 'doctor'")
+	rows, err := db.Query("SELECT username,name,subtitle,avatar from users WHERE type = 'doctor'")
 	if err != nil {
 		//db.Close()
 		return []User{}, err
@@ -68,7 +68,7 @@ func (db *DbConnection) GetDoctors() ([]User, error) {
 
 	for rows.Next() {
 		aux := User{}
-		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar, &aux.Patients)
+		err = rows.Scan(&aux.Username, &aux.Name, &aux.Subtitle, &aux.Avatar)
 		user = append(user, aux)
 		if err != nil {
 			//db.Close()
@@ -85,7 +85,7 @@ func (db *DbConnection) GetPatients(doctor string) ([]User, error) {
 
 	//rows, err := db.Query("SELECT * FROM users WHERE username IN (SELECT p.username FROM patients AS p JOIN users AS u ON p.id = u.patients WHERE u.name = '" + doctor + "')")
 	// temporarily workaround until find a way to automatically update the list of patients
-	rows, err := db.Query("SELECT * FROM users WHERE type = 'patient'")
+	rows, err := db.Query("SELECT username,name,avatar FROM users WHERE type = 'patient'")
 	if err != nil {
 		return []User{}, err
 	}
@@ -94,7 +94,7 @@ func (db *DbConnection) GetPatients(doctor string) ([]User, error) {
 
 	for rows.Next() {
 		aux := User{}
-		err = rows.Scan(&aux.Username, &aux.Name, &aux.Password, &aux.Type, &aux.Subtitle, &aux.Avatar, &aux.Patients)
+		err = rows.Scan(&aux.Username, &aux.Name, &aux.Avatar)
 		user = append(user, aux)
 		if err != nil {
 			//db.Close()

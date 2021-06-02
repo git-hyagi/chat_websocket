@@ -43,7 +43,8 @@ type wsStruct struct {
 	redisStruct
 	esStruct
 	context.Context
-	listConn map[*websocket.Conn]bool
+	//listConn map[*websocket.Conn]bool
+	listConn map[string][]*websocket.Conn
 	newConn  chan *websocket.Conn
 }
 
@@ -119,7 +120,8 @@ func main() {
 	register.DB = database
 
 	// websocket struct
-	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
+	//webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
+	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[string][]*websocket.Conn{}, newConn: make(chan *websocket.Conn)}
 
 	log.Println("[INFO] Starting server on port", port)
 
@@ -170,8 +172,9 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// store this websocket connection in the list of connections
-	webSkt.listConn[ws] = true
-	log.Println("[INFO] New Client Connected! List of connections:", webSkt.listConn)
+	//webSkt.listConn[ws] = true
+	webSkt.listConn[mux.Vars(r)["doctor"]+"-"+mux.Vars(r)["patient"]] = append(webSkt.listConn[mux.Vars(r)["doctor"]+"-"+mux.Vars(r)["patient"]], ws)
+	//log.Println("[INFO] New Client Connected! List of connections:", webSkt.listConn)
 
 	// send this new connection to newConn channel, to let rcvMsg goroutine handle it
 	webSkt.newConn <- ws
@@ -255,7 +258,7 @@ func (webSkt *wsStruct) newConnections() {
 				`"}`), &jsonMsg)
 			if err := ws.WriteJSON(jsonMsg); err != nil {
 				log.Println("[ERROR]", err)
-				delete(webSkt.listConn, ws)
+				//delete(webSkt.listConn, ws)
 				return
 			}
 		}
@@ -275,7 +278,7 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		_, p, err := ws.ReadMessage()
 		if err != nil {
 			// remove the connection from the list in case of error
-			delete(webSkt.listConn, ws)
+			//delete(webSkt.listConn, ws)
 			log.Println("[ERROR]", err)
 			return
 		}
@@ -289,7 +292,14 @@ func (webSkt *wsStruct) rcvMsg(ws *websocket.Conn) {
 		jsonMsg.SentBy = strings.Replace(jsonMsg.SentBy, "+", " ", -1)
 
 		// publish the message on redis pubsub channel
-		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{"Name": "`+jsonMsg.SentBy+`","Message": "`+jsonMsg.Message+`","When": "`+date+`"}`).Err()
+		err = webSkt.redisStruct.client.Publish(webSkt.Context, webSkt.channel, `{
+			"Name": "`+jsonMsg.SentBy+`",
+			"Message": "`+jsonMsg.Message+`",
+			"Doctor": "`+jsonMsg.Doctor+`",
+			"Patient": "`+jsonMsg.Patient+`",
+			"SentBy": "`+jsonMsg.SentBy+`",
+			"When": "`+date+`"
+			}`).Err()
 		if err != nil {
 			log.Println("[ERROR]", err)
 		}
@@ -318,13 +328,16 @@ func (webSkt *wsStruct) printMsg(msgChan chan string) {
 
 		// decode the message from []byte to json
 		var jsonMsg msg
-		json.Unmarshal([]byte(newMsg), &jsonMsg)
+		if err := json.Unmarshal([]byte(newMsg), &jsonMsg); err != nil {
+			log.Println("err", err)
+		}
 
-		// broadcast the message to all clients connected
-		for i := range webSkt.listConn {
-			if err := i.WriteJSON(jsonMsg); err != nil {
+		// broadcast the message to all connections from the same websocket
+		for i, conn := range webSkt.listConn[jsonMsg.Doctor+"-"+jsonMsg.Patient] {
+			if err := conn.WriteJSON(jsonMsg); err != nil {
 				log.Println("[ERROR]", err)
-				return
+				webSkt.listConn[jsonMsg.Doctor+"-"+jsonMsg.Patient] = removeConnection(webSkt.listConn[jsonMsg.Doctor+"-"+jsonMsg.Patient], i)
+				continue
 			}
 		}
 	}
@@ -436,7 +449,7 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct, dbServer *db.Db
 	if os.Getenv("ES_HOST") != "" {
 		es.hosts = os.Getenv("ES_HOST")
 	} else {
-		es.hosts = "http://chatserver:9201"
+		es.hosts = "http://chatserver:9200"
 	}
 
 	if os.Getenv("DB_HOST") != "" {
@@ -466,4 +479,13 @@ func getEnvVars() (port string, rdis *redisStruct, es *esStruct, dbServer *db.Db
 	}
 
 	return port, rdis, es, dbServer
+}
+
+// remove a connection from list
+func removeConnection(conn []*websocket.Conn, i int) []*websocket.Conn {
+	if i < len(conn) {
+		conn[i] = conn[len(conn)-1]
+		return conn[:len(conn)-1]
+	}
+	return conn
 }

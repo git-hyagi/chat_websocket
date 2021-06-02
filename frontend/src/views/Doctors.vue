@@ -58,6 +58,7 @@ export default {
             subtitle: docJson.Subtitle,
             avatar: docJson.Avatar,
             to: "/chat?q=" + docJson.Username,
+            doctorUsername: docJson.Username,
             doctorName: docJson.Name,
           };
           self.items.push(aux);
@@ -72,13 +73,14 @@ export default {
 
   methods: {
     updateCookie: function (item) {
+      console.log(item.doctorUsername);
       this.$cookie.set("previous-chat", item.to);
-      this.$cookie.set("doctor", item.doctorName);
+      this.$cookie.set("doctor", item.doctorUsername);
       this.$cookie.set("patient", this.$cookie.get("username"));
       this.$cookie.set("chatWith", item.doctorName);
 
       this.$router.push(item.to);
-      this.$router.go();
+     // this.$router.go();
     },
   },
 };
