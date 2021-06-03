@@ -132,13 +132,36 @@
       </template>
 
       <template v-else>
-        <v-avatar>
-          <img :src="avatar" />
-        </v-avatar>
-
-        <v-btn icon @click="logout">
-          <v-icon>mdi-logout</v-icon>
-        </v-btn>
+        <v-menu bottom min-width="200px" rounded offset-y>
+          <template v-slot:activator="{ on }">
+            <v-btn icon x-large v-on="on">
+              <v-avatar>
+                <img :src="avatar" />
+              </v-avatar>
+            </v-btn>
+          </template>
+          <v-card>
+            <v-list-item-content>
+              <div class="mx-auto text-center">
+                <v-avatar>
+                  <img :src="avatar" />
+                </v-avatar>
+                <h3>{{ user.fullName }}</h3>
+                <p class="text-caption mt-1">
+                  <!--    {{ user.email }}  -->
+                </p>
+                <v-divider class="my-3"></v-divider>
+                <v-btn depressed rounded text>
+                  <i> Edit Account [WIP] </i>
+                </v-btn>
+                <v-divider class="my-3"></v-divider>
+                <v-btn depressed rounded text @click="logout">
+                  Disconnect
+                </v-btn>
+              </div>
+            </v-list-item-content>
+          </v-card>
+        </v-menu>
       </template>
     </v-app-bar>
 
@@ -162,6 +185,11 @@ export default {
   },
   data() {
     return {
+      user: {
+        fullName: this.$cookie.get("user"),
+        email: "a@a.com",
+      },
+
       avatar: this.$cookie.get("avatar"),
       type: this.$cookie.get("type"),
       docItems: [
