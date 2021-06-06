@@ -8,6 +8,7 @@ import Patients from '../views/Patients.vue'
 import About from '../views/About.vue'
 import Admin from '../views/Admins.vue'
 import Register from '../views/Register.vue'
+import Schedule from '../views/Schedule.vue'
 
 Vue.use(VueRouter)
 
@@ -47,6 +48,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/schedule',
+    name: 'Schedule',
+    component: Schedule
   },
   {
     path: '/about',

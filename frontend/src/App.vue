@@ -199,6 +199,7 @@ export default {
           to: this.$cookie.get("previous-chat"),
         },
         { title: "Patients", icon: "mdi-clipboard-pulse", to: "/patients" },
+        { title: "Schedule", icon: "mdi-calendar-month", to: "/schedule" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
       patientItems: [
@@ -208,6 +209,7 @@ export default {
           to: this.$cookie.get("previous-chat"),
         },
         { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
+        { title: "Schedule", icon: "mdi-calendar-month", to: "/schedule" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
       adminItems: [
@@ -219,6 +221,7 @@ export default {
         { title: "Admin", icon: "mdi-shield-account", to: "/admin" },
         { title: "Doctors", icon: "mdi-doctor", to: "/doctors" },
         { title: "Patients", icon: "mdi-clipboard-pulse", to: "/patients" },
+        { title: "Schedule", icon: "mdi-calendar-month", to: "/schedule" },
         { title: "About", icon: "mdi-information", to: "/about" },
       ],
       notLogged: [
