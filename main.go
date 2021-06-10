@@ -18,9 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const corsServer = "http://chatserver:8000"
-
-//const corsServer = "http://localhost:8081"
+const corsServer = "http://192.168.15.114"
 
 // when client connects bring only the last `lastNMsg` messages
 const lastNMsg = 5
@@ -43,7 +41,6 @@ type wsStruct struct {
 	redisStruct
 	esStruct
 	context.Context
-	//listConn map[*websocket.Conn]bool
 	listConn map[string][]*websocket.Conn
 	newConn  chan *websocket.Conn
 }
@@ -120,7 +117,6 @@ func main() {
 	register.DB = database
 
 	// websocket struct
-	//webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[*websocket.Conn]bool{}, newConn: make(chan *websocket.Conn)}
 	webSkt := &wsStruct{redisStruct: *rdis, Context: ctx, esStruct: *es, listConn: map[string][]*websocket.Conn{}, newConn: make(chan *websocket.Conn)}
 
 	log.Println("[INFO] Starting server on port", port)
@@ -172,9 +168,7 @@ func (webSkt *wsStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// store this websocket connection in the list of connections
-	//webSkt.listConn[ws] = true
 	webSkt.listConn[mux.Vars(r)["doctor"]+"-"+mux.Vars(r)["patient"]] = append(webSkt.listConn[mux.Vars(r)["doctor"]+"-"+mux.Vars(r)["patient"]], ws)
-	//log.Println("[INFO] New Client Connected! List of connections:", webSkt.listConn)
 
 	// send this new connection to newConn channel, to let rcvMsg goroutine handle it
 	webSkt.newConn <- ws

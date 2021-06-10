@@ -9,6 +9,7 @@ import vuecookie from 'vue-cookie'
 Vue.config.productionTip = false
 Vue.prototype.$http = axios
 Vue.prototype.$cookie = vuecookie
+Vue.prototype.$server = "192.168.15.114"
 
 new Vue({
   router,

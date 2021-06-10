@@ -67,8 +67,6 @@
 export default {
   data() {
     return {
-      server: "chatserver:8080",
-      //server: "localhost:8080",
       valid: true,
       name: "",
       nameRules: [
@@ -138,7 +136,7 @@ export default {
       };
 
       this.$http
-        .post("http://" + this.server + "/register", data, {
+        .post("http://" + this.$server + "/register", data, {
           headers: headers,
         })
         .then(function () {

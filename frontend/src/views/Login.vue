@@ -42,8 +42,6 @@
 <script>
 export default {
   data: () => ({
-    server: "chatserver:8080",
-    //server: "localhost:8080",
     name: "",
     nameRules: [(v) => !!v || "Name is required"],
     password: "",
@@ -69,7 +67,7 @@ export default {
       };
 
       this.$http
-        .post("http://" + this.server + "/login", data, {
+        .post("http://" + this.$server + "/login", data, {
           headers: headers,
           withCredentials: true,
         })

@@ -30,7 +30,6 @@ export default {
     }
 
     return {
-      server: "chatserver:8080",
       logged: true,
       items: [],
     };
@@ -44,7 +43,7 @@ export default {
 
     self = this;
     this.$http
-      .get("http://" + this.server + "/patients/" + self.$cookie.get("user"), {
+      .get("http://" + this.$server + "/patients/" + self.$cookie.get("user"), {
         headers: headers,
       })
       .then(function (response) {

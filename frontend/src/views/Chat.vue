@@ -45,7 +45,6 @@ export default {
     }
 
     return {
-      server: "chatserver:8080",
       logged: true,
       doctor: this.$cookie.get("doctor"),
       patient: this.$cookie.get("patient"),
@@ -107,7 +106,7 @@ export default {
     },
     webSocket: function () {
       var websocketAddress =
-        "ws://" + this.server + "/ws/" + this.doctor + "/" + this.patient;
+        "ws://" + this.$server + "/ws/" + this.doctor + "/" + this.patient;
 
       this.socket = new WebSocket(websocketAddress);
 

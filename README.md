@@ -106,3 +106,9 @@ To avoid issues with CORS, configure a local IP on `hosts` to point to *chatserv
 ~~~
 $ sudo echo '192.168.0.100   chatserver' >> /etc/hosts
 ~~~
+
+or run a proxy container:
+~~~
+$ cd proxy/
+# podman run --rm -d --name proxy -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro -p 80:8000 nginx:stable-alpine
+~~~
